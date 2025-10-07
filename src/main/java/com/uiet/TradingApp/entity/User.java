@@ -5,6 +5,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import lombok.Data;
 
@@ -19,7 +20,7 @@ public class User {
   private String role;
   private LocalDateTime createadAt;
   private LocalDateTime lastActive;
-  private Double balance;
+  private BigDecimal balance;
   private String country;
   private String status; // Account is active , not logged in , suspended
 }

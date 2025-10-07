@@ -1,0 +1,52 @@
+package com.uiet.TradingApp.service;
+
+import com.uiet.TradingApp.entity.Portfolio;
+import com.uiet.TradingApp.entity.Stock;
+import com.uiet.TradingApp.entity.User;
+import com.uiet.TradingApp.repository.PortfolioRepository;
+import java.util.Optional;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+@Service
+public class PortfolioService {
+  @Autowired private PortfolioRepository portfolioRepository;
+
+  public Long getUserStockQuantity(User user, Stock stock) {
+
+    Optional<Portfolio> portfolio =
+        portfolioRepository.findByUserAndStock(user, stock);
+    if (portfolio.isPresent()) {
+      return portfolio.get().getQuantity();
+    }
+    return 0L;
+  }
+
+  public void removeStocks(User user, Long numberOfStocks, Stock stock) {
+    Optional<Portfolio> portfolio =
+        portfolioRepository.findByUserAndStock(user, stock);
+    if (portfolio.isPresent()) {
+      if (numberOfStocks <= portfolio.get().getQuantity()) {
+        portfolio.get().setQuantity(portfolio.get().getQuantity() -
+                                    numberOfStocks);
+        portfolioRepository.save(portfolio.get());
+      } else {
+        throw new RuntimeException("Not enough stocks");
+      }
+    } else {
+      throw new RuntimeException("Portfolio not found");
+    }
+  }
+
+  public void addStocks(User user, Long numberOfStocks, Stock stock) {
+    Optional<Portfolio> portfolio =
+        portfolioRepository.findByUserAndStock(user, stock);
+    if (portfolio.isPresent()) {
+      portfolio.get().setQuantity(portfolio.get().getQuantity() +
+                                  numberOfStocks);
+      portfolioRepository.save(portfolio.get());
+    } else {
+      throw new RuntimeException("Portfolio not found");
+    }
+  }
+}
