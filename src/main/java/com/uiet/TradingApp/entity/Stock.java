@@ -30,6 +30,7 @@ public class Stock {
   private BigDecimal lowPrice;
 
   private Long tradedVolume;
+  private Long totalStocks;
   private LocalDateTime lastUpdated;
 
   @ManyToOne(fetch = FetchType.LAZY)

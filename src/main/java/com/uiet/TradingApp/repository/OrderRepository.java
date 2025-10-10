@@ -19,4 +19,12 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
   public List<Order>
   findByStockAndTypeAndStatusInAndPriceLessThanEqualOrderByPriceAsc(
       Stock stock, OrderType type, List<OrderStatus> status, BigDecimal price);
+
+  public List<Order>
+  findByStockAndTypeAndStatusInAndPriceGreaterThanEqualOrderByPriceDesc(
+      Stock stock, OrderType type, List<OrderStatus> status, BigDecimal price);
+
+  public List<Order> findByUser_UserName(String userName);
+
+  public List<Order> findByUser_id(Long userId);
 }

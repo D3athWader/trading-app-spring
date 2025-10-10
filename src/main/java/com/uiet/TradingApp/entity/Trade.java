@@ -10,11 +10,13 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import lombok.Builder;
 import lombok.Data;
 
 @Entity
 @Table(name = "trade")
 @Data
+@Builder
 public class Trade {
 
   @Id @GeneratedValue(strategy = GenerationType.IDENTITY) private long id;
@@ -23,7 +25,7 @@ public class Trade {
 
   @ManyToOne @JoinColumn(name = "seller_id") private User seller;
 
-  @ManyToOne @JoinColumn(name = "stock_id") private User stock;
+  @ManyToOne @JoinColumn(name = "stock_id") private Stock stock;
 
   @Column(nullable = false) private Long quantity;
 

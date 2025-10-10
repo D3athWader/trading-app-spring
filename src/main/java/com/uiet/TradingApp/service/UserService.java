@@ -40,6 +40,7 @@ public class UserService {
     BigDecimal userBalance = user.getBalance();
     if (userBalance.compareTo(removeBalance) >= 0) {
       user.setBalance(userBalance.subtract(removeBalance));
+      userRepository.save(user);
     } else {
       throw new RuntimeException("Insufficient balance");
     }
@@ -48,6 +49,7 @@ public class UserService {
   public void addBalance(User user, BigDecimal addBalance) {
     BigDecimal userBalance = user.getBalance();
     user.setBalance(userBalance.add(addBalance));
+    userRepository.save(user);
   }
 
   public Long getUserId(User user) { return user.getId(); }

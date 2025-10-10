@@ -6,10 +6,12 @@ import com.uiet.TradingApp.entity.Order;
 import com.uiet.TradingApp.entity.Stock;
 import com.uiet.TradingApp.entity.User;
 import com.uiet.TradingApp.repository.OrderRepository;
+import jakarta.transaction.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -19,22 +21,26 @@ public class OrderService {
   @Autowired private UserService userService;
   // @Autowired private StockService stockService;
   @Autowired private PortfolioService portfolioService;
+  @Autowired @Lazy OrderMatchingService orderMatchingService;
 
+  @Transactional
   public boolean placeSellOrder(Order order) {
-    Long stocks = portfolioService.getUserStockQuantity(order.getUser(),
-                                                        order.getStock());
-    if (stocks >= order.getQuantity()) {
+    Long stockQuantity = portfolioService.getUserStockQuantity(
+        order.getUser(), order.getStock());
+    if (stockQuantity >= order.getQuantity()) {
       order.setType(OrderType.SELL);
       order.setStatus(OrderStatus.PENDING);
       order.setTimestamp(LocalDateTime.now());
       portfolioService.removeStocks(order.getUser(), order.getQuantity(),
                                     order.getStock());
       orderRepository.save(order);
+      orderMatchingService.sellOrderMatcher(order);
       return true;
     }
     return false;
   }
 
+  @Transactional
   public void placeBuyOrder(Order order) {
     BigDecimal orderValue = order.getStock().getCurrentPrice().multiply(
         BigDecimal.valueOf(order.getQuantity()));
@@ -46,6 +52,7 @@ public class OrderService {
       order.setPrice(order.getStock().getCurrentPrice());
       userService.deductBalance(order.getUser(), orderValue);
       orderRepository.save(order);
+      orderMatchingService.buyOrderMatcher(order);
     } else {
       throw new RuntimeException("Insufficient balance");
     }
@@ -80,11 +87,19 @@ public class OrderService {
     orderRepository.save(order);
   }
 
-  public List<Order> orderMatcherHelper(Stock stock, OrderType type,
-                                        List<OrderStatus> status,
-                                        BigDecimal price) {
+  public List<Order> buyOrderMatcherHelper(Stock stock, OrderType type,
+                                           List<OrderStatus> status,
+                                           BigDecimal price) {
     return orderRepository
         .findByStockAndTypeAndStatusInAndPriceLessThanEqualOrderByPriceAsc(
+            stock, type, status, price);
+  }
+
+  public List<Order> sellOrderMatcherHelper(Stock stock, OrderType type,
+                                            List<OrderStatus> status,
+                                            BigDecimal price) {
+    return orderRepository
+        .findByStockAndTypeAndStatusInAndPriceGreaterThanEqualOrderByPriceDesc(
             stock, type, status, price);
   }
 

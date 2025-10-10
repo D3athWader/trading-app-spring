@@ -19,7 +19,6 @@ public class Company {
   private String name;
   private String tickerSymbol;
   private String sector;
-  Long shares;
   Double marketCap;
   private LocalDateTime createdAt;
   @OneToMany(mappedBy = "company", cascade = CascadeType.ALL)

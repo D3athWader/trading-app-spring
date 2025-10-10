@@ -8,4 +8,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface PortfolioRepository extends JpaRepository<Portfolio, Long> {
   public Optional<Portfolio> findByUserAndStock(User user, Stock stock);
+
+  public Optional<Portfolio> findByUser(User user);
 }

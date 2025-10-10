@@ -23,13 +23,16 @@ public class PortfolioService {
   }
 
   public void removeStocks(User user, Long numberOfStocks, Stock stock) {
-    Optional<Portfolio> portfolio =
+    Optional<Portfolio> opPortfolio =
         portfolioRepository.findByUserAndStock(user, stock);
-    if (portfolio.isPresent()) {
-      if (numberOfStocks <= portfolio.get().getQuantity()) {
-        portfolio.get().setQuantity(portfolio.get().getQuantity() -
-                                    numberOfStocks);
-        portfolioRepository.save(portfolio.get());
+    if (opPortfolio.isPresent()) {
+      Portfolio portfolio = opPortfolio.get();
+      if (numberOfStocks <= portfolio.getQuantity()) {
+        portfolio.setQuantity(portfolio.getQuantity() - numberOfStocks);
+        portfolioRepository.save(portfolio);
+        if (portfolio.getQuantity() == 0L) {
+          portfolioRepository.delete(portfolio);
+        }
       } else {
         throw new RuntimeException("Not enough stocks");
       }
@@ -46,7 +49,13 @@ public class PortfolioService {
                                   numberOfStocks);
       portfolioRepository.save(portfolio.get());
     } else {
-      throw new RuntimeException("Portfolio not found");
+      Portfolio newPortfolio = Portfolio.builder()
+                                   .user(user)
+                                   .stock(stock)
+                                   .quantity(numberOfStocks)
+                                   .averagePricePaid(stock.getCurrentPrice())
+                                   .build();
+      portfolioRepository.save(newPortfolio);
     }
   }
 }
