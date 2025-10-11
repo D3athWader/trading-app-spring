@@ -4,6 +4,7 @@ import com.uiet.TradingApp.DTO.StockDTO;
 import com.uiet.TradingApp.entity.Portfolio;
 import com.uiet.TradingApp.entity.Stock;
 import com.uiet.TradingApp.repository.StockRepository;
+import jakarta.transaction.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -19,6 +20,7 @@ public class StockService {
     return stockRepository.findBySymbol(symbol);
   }
 
+  @Transactional
   public void updatePrice(Stock stock, BigDecimal soldPrice) {
     stock.setCurrentPrice(soldPrice);
     if (soldPrice.compareTo(stock.getHighPrice()) > 1) {
@@ -32,22 +34,26 @@ public class StockService {
     saveEntry(stock);
   }
 
+  @Transactional
   public void updateTradedVolume(Stock stock, Long quantity) {
     stock.setTradedVolume(stock.getTradedVolume() + quantity);
     saveEntry(stock);
   }
 
+  @Transactional
   public void saveEntry(Stock stock) {
     stock.setLastUpdated(LocalDateTime.now());
     stockRepository.save(stock);
   }
 
+  @Transactional
   public void newStock(Stock stock) {
     stock.setOpenPrice(stock.getCurrentPrice());
     stock.setTradedVolume(0L);
     stock.setClosePrice(BigDecimal.valueOf(0.0));
   }
 
+  @Transactional
   public void changetotalStocks(Stock stock, Long newQuantity) {
     stock.setTotalStocks(newQuantity);
     saveEntry(stock);

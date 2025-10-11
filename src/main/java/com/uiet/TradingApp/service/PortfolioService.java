@@ -4,6 +4,7 @@ import com.uiet.TradingApp.entity.Portfolio;
 import com.uiet.TradingApp.entity.Stock;
 import com.uiet.TradingApp.entity.User;
 import com.uiet.TradingApp.repository.PortfolioRepository;
+import jakarta.transaction.Transactional;
 import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -22,6 +23,7 @@ public class PortfolioService {
     return 0L;
   }
 
+  @Transactional
   public void removeStocks(User user, Long numberOfStocks, Stock stock) {
     Optional<Portfolio> opPortfolio =
         portfolioRepository.findByUserAndStock(user, stock);
@@ -41,6 +43,7 @@ public class PortfolioService {
     }
   }
 
+  @Transactional
   public void addStocks(User user, Long numberOfStocks, Stock stock) {
     Optional<Portfolio> portfolio =
         portfolioRepository.findByUserAndStock(user, stock);

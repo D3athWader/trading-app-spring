@@ -67,6 +67,7 @@ public class OrderService {
     return orderRepository.findByUserOrderByTimestampDesc(user);
   }
 
+  @Transactional
   public void cancelOrder(Order order) {
     OrderStatus status = order.getStatus();
     if (status.equals(OrderStatus.FILLED) ||

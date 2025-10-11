@@ -5,6 +5,7 @@ import com.uiet.TradingApp.entity.Stock;
 import com.uiet.TradingApp.entity.Trade;
 import com.uiet.TradingApp.entity.User;
 import com.uiet.TradingApp.repository.TradeRepository;
+import jakarta.transaction.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,6 +18,7 @@ public class TradeService {
   @Autowired private UserService userService;
   @Autowired private PortfolioService portfolioService;
 
+  @Transactional
   public void newEntry(Trade trade) {
     trade.setTimestamp(LocalDateTime.now());
     sendBalance(trade);
@@ -38,12 +40,14 @@ public class TradeService {
 
   public void deleteEntry(Trade trade) { tradeRepository.delete(trade); }
 
+  @Transactional
   public void sendBalance(Trade trade) {
     BigDecimal toSend =
         trade.getPrice().multiply(BigDecimal.valueOf(trade.getQuantity()));
     userService.addBalance(trade.getSeller(), toSend);
   }
 
+  @Transactional
   public void addStocks(Trade trade) {
     portfolioService.addStocks(trade.getBuyer(), trade.getQuantity(),
                                trade.getStock());

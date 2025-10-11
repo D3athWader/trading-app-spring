@@ -2,6 +2,7 @@ package com.uiet.TradingApp.service;
 
 import com.uiet.TradingApp.entity.User;
 import com.uiet.TradingApp.repository.UserRepository;
+import jakarta.transaction.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -18,8 +19,12 @@ public class UserService {
   private static final PasswordEncoder PASSWORD_ENCODER =
       new BCryptPasswordEncoder();
 
-  public void saveUser(User user) { userRepository.save(user); }
+  @Transactional
+  public void saveUser(User user) {
+    userRepository.save(user);
+  }
 
+  @Transactional
   public void createUser(User user) {
     user.setPassword(PASSWORD_ENCODER.encode(user.getPassword()));
     user.setCreateadAt(LocalDateTime.now());
@@ -30,12 +35,14 @@ public class UserService {
     userRepository.save(user);
   }
 
+  @Transactional
   public void updateUser(User user) {
     user.setPassword(PASSWORD_ENCODER.encode(user.getPassword()));
     user.setLastActive(LocalDateTime.now());
     userRepository.save(user);
   }
 
+  @Transactional
   public void deductBalance(User user, BigDecimal removeBalance) {
     BigDecimal userBalance = user.getBalance();
     if (userBalance.compareTo(removeBalance) >= 0) {
@@ -46,6 +53,7 @@ public class UserService {
     }
   }
 
+  @Transactional
   public void addBalance(User user, BigDecimal addBalance) {
     BigDecimal userBalance = user.getBalance();
     user.setBalance(userBalance.add(addBalance));
@@ -56,7 +64,10 @@ public class UserService {
 
   public BigDecimal getUserBalance(User user) { return user.getBalance(); }
 
-  public void deleteUser(User user) { userRepository.delete(user); }
+  @Transactional
+  public void deleteUser(User user) {
+    userRepository.delete(user);
+  }
 
   public List<User> getAll() { return userRepository.findAll(); }
 }

@@ -4,6 +4,7 @@ package com.uiet.TradingApp.service;
 import com.uiet.TradingApp.entity.Enum.OrderStatus;
 import com.uiet.TradingApp.entity.Enum.OrderType;
 import com.uiet.TradingApp.entity.Order;
+import jakarta.transaction.Transactional;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -13,6 +14,7 @@ public class OrderMatchingService {
   @Autowired private OrderService orderService;
   @Autowired private TradeService tradeService;
 
+  @Transactional
   public void buyOrderMatcher(Order buyOrder) {
 
     Long neededStocks = buyOrder.getQuantity();
@@ -57,6 +59,7 @@ public class OrderMatchingService {
     orderService.saveEntry(buyOrder);
   }
 
+  @Transactional
   public void sellOrderMatcher(Order sellOrder) {
     Long sellingStocks = sellOrder.getQuantity();
     Long soldStocks = 0L;
