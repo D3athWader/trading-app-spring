@@ -2,10 +2,10 @@ package com.uiet.TradingApp.controller;
 
 import com.uiet.TradingApp.DTO.AuthRequest;
 import com.uiet.TradingApp.entity.User;
-import com.uiet.TradingApp.repository.UserRepository;
+import com.uiet.TradingApp.service.TempService;
 import com.uiet.TradingApp.service.UserService;
 import com.uiet.TradingApp.utils.JwtUtil;
-import java.util.List;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -14,25 +14,21 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/public")
+@Slf4j
 public class PublicController {
-  @Autowired
-  private UserService userService;
-  @Autowired
-  private AuthenticationManager authenticationManager;
-  @Autowired
-  private UserDetailsService userDetailsService;
-  @Autowired
-  private JwtUtil jwtUtil;
-  @Autowired
-  private UserRepository userRepository;
+  @Autowired private UserService userService;
+  @Autowired private AuthenticationManager authenticationManager;
+  @Autowired private UserDetailsService userDetailsService;
+  @Autowired private JwtUtil jwtUtil;
+  @Autowired private TempService tempService;
 
   @GetMapping("/health-check")
   public String healthCheck() {
@@ -50,8 +46,9 @@ public class PublicController {
     try {
       authenticationManager.authenticate(
           new UsernamePasswordAuthenticationToken(authRequest.getUserName(),
-              authRequest.getPassword()));
-      UserDetails userDetails = userDetailsService.loadUserByUsername(authRequest.getUserName());
+                                                  authRequest.getPassword()));
+      UserDetails userDetails =
+          userDetailsService.loadUserByUsername(authRequest.getUserName());
       String jwtToken = jwtUtil.generateToken(userDetails.getUsername());
       return ResponseEntity.ok(jwtToken);
 
@@ -62,21 +59,18 @@ public class PublicController {
     }
   }
 
-  @PostMapping("/remove-user")
-  public ResponseEntity<?> removeUser(@RequestBody AuthRequest authRequest) {
-    userService.deleteUser(authRequest.getUserName());
-    return ResponseEntity.ok("User deleted successfully");
-  }
-
-  @GetMapping("/make-admin/{username}")
-  public ResponseEntity<?> makeUserAdmin(@PathVariable String username) {
-
-    User user = userRepository.findByUserName(username).orElseThrow(
-        () -> new RuntimeException("User not found"));
-    List<String> roles = user.getRole();
-    roles.add("ADMIN");
-    user.setRole(roles);
-    userService.saveUser(user);
-    return ResponseEntity.ok("User made admin successfully");
+  @GetMapping("/logout")
+  public ResponseEntity<?>
+  logout(@RequestHeader("Authorization") String authHeader) {
+    String token = authHeader.substring(7);
+    try {
+      tempService.newEntry(token);
+      log.info("logged out {}", token);
+      return ResponseEntity.status(HttpStatus.OK).body("Logout successful");
+    } catch (Exception e) {
+      log.error("Error in logout {}", e);
+      return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+          .body("Error in logout");
+    }
   }
 }
