@@ -15,16 +15,18 @@ import org.springframework.security.web.authentication.WebAuthenticationDetailsS
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-// TODO ADD LOGOUT
+// TODO: ADD LOGOUT
 @Component
 public class JwtFilter extends OncePerRequestFilter {
-  @Autowired private UserDetailsService userDetailsService;
-  @Autowired private JwtUtil jwtUtil;
+  @Autowired
+  private UserDetailsService userDetailsService;
+  @Autowired
+  private JwtUtil jwtUtil;
 
   @Override
   protected void doFilterInternal(HttpServletRequest request,
-                                  HttpServletResponse response,
-                                  FilterChain filterChain)
+      HttpServletResponse response,
+      FilterChain filterChain)
       throws ServletException, IOException {
     String authorizationHeader = request.getHeader("Authorization");
     String username = null;
@@ -42,9 +44,8 @@ public class JwtFilter extends OncePerRequestFilter {
     if (username != null) {
       UserDetails userDetails = userDetailsService.loadUserByUsername(username);
       if (jwtUtil.validateToken(jwt)) {
-        UsernamePasswordAuthenticationToken auth =
-            new UsernamePasswordAuthenticationToken(
-                userDetails, null, userDetails.getAuthorities());
+        UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
+            userDetails, null, userDetails.getAuthorities());
         auth.setDetails(
             new WebAuthenticationDetailsSource().buildDetails(request));
         SecurityContextHolder.getContext().setAuthentication(auth);

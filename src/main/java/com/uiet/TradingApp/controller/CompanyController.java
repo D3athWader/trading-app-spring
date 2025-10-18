@@ -3,7 +3,6 @@ package com.uiet.TradingApp.controller;
 import com.uiet.TradingApp.DTO.CompanyDTO;
 import com.uiet.TradingApp.entity.Company;
 import com.uiet.TradingApp.service.CompanyService;
-import com.uiet.TradingApp.utils.JwtUtil;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,7 +17,8 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/company")
 public class CompanyController {
 
-  @Autowired CompanyService companyService;
+  @Autowired
+  CompanyService companyService;
 
   @GetMapping("/all")
   public ResponseEntity<?> getAllCompanies() {
@@ -26,8 +26,7 @@ public class CompanyController {
     if (companies.isEmpty()) {
       return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     } else {
-      List<CompanyDTO> companiesDTO =
-          companies.stream().map(this::convertToDTO).toList();
+      List<CompanyDTO> companiesDTO = companies.stream().map(this::convertToDTO).toList();
       return new ResponseEntity<>(companiesDTO, HttpStatus.OK);
     }
   }

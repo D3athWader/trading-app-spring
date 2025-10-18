@@ -6,10 +6,11 @@ Add HTTPs \n
 <!-- Add multithreading -->
 
 Add Kafka queues
-Add logging
+
+<!-- Add logging -->
+
 Add Redis,docker
 Redis b/w sql and server
-Add email verification
 Add SMTP server
 Add Email verification
 Add websockets

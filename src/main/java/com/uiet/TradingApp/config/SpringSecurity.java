@@ -18,34 +18,34 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @EnableWebSecurity
 public class SpringSecurity {
 
-  @Autowired private JwtFilter jwtFilter;
+  @Autowired
+  private JwtFilter jwtFilter;
 
   @Bean
   public SecurityFilterChain filterChain(HttpSecurity httpSecurity)
       throws Exception {
     httpSecurity.csrf(csrf -> csrf.disable())
-        .authorizeHttpRequests(auth
-                               -> auth.requestMatchers("/admin/**")
-                                      .hasAuthority("ROLE_ADMIN")
-                                      .requestMatchers("/user-panel/**")
-                                      .hasAuthority("ROLE_USER")
-                                      .anyRequest()
-                                      .permitAll());
-    // .httpBasic(Customizer.withDefaults());
+        .authorizeHttpRequests(
+            auth -> auth.requestMatchers("/admin/**")
+                .hasAuthority("ROLE_ADMIN")
+                .requestMatchers("/user-panel/**")
+                .hasAuthority("ROLE_USER")
+                .requestMatchers("/company/**")
+                .hasAnyAuthority("ROLE_COMPANY", "ROLE_ADMIN", "ROLE_USER")
+                .anyRequest()
+                .permitAll());
     httpSecurity
         .sessionManagement(
-            session
-            -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         .csrf(csrf -> csrf.disable());
     httpSecurity.addFilterBefore(jwtFilter,
-                                 UsernamePasswordAuthenticationFilter.class);
+        UsernamePasswordAuthenticationFilter.class);
 
     return httpSecurity.build();
   }
 
   @Bean
-  public AuthenticationManager
-  authenticationManager(AuthenticationConfiguration authenticationConfiguration)
+  public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration)
       throws Exception {
 
     return authenticationConfiguration.getAuthenticationManager();

@@ -29,9 +29,12 @@ public class UserController {
     return new String("Hello Controller");
   }
 
-  @Autowired private UserService userService;
-  @Autowired private UserRepository userRepository;
-  @Autowired private JwtUtil jwtUtil;
+  @Autowired
+  private UserService userService;
+  @Autowired
+  private UserRepository userRepository;
+  @Autowired
+  private JwtUtil jwtUtil;
 
   @GetMapping("/find-user/{userName}")
   public ResponseEntity<?> findUser(@PathVariable String userName) {
@@ -40,15 +43,13 @@ public class UserController {
       return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     } else {
       User localUser = user.get();
-      UserDTO sendUser =
-          new UserDTO(localUser.getId(), userName, localUser.getCountry());
+      UserDTO sendUser = new UserDTO(localUser.getId(), userName, localUser.getCountry());
       return new ResponseEntity<>(sendUser, HttpStatus.OK);
     }
   }
 
   @DeleteMapping("/delete")
-  public ResponseEntity<?>
-  deleteUser(@RequestHeader("Authorization") String authHeader) {
+  public ResponseEntity<?> deleteUser(@RequestHeader("Authorization") String authHeader) {
     // Optional<User> user = userRepository.findByUserName(userName);
     // if (!user.isPresent()) {
     // return new ResponseEntity<>(HttpStatus.NOT_FOUND);
@@ -57,11 +58,12 @@ public class UserController {
     // return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     // }
     try {
-      String userName = jwtUtil.extractUsername(authHeader);
+      String jwtToken = authHeader.substring(7);
+      String userName = jwtUtil.extractUsername(jwtToken);
       userService.deleteUser(userName);
       return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     } catch (Exception e) {
-      return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+      return new ResponseEntity<>("Exception " + e, HttpStatus.FORBIDDEN);
     }
   }
 
@@ -74,4 +76,14 @@ public class UserController {
       return new ResponseEntity<>(userList, HttpStatus.OK);
     }
   }
+
+  // @GetMapping("/logout")
+  // public ResponseEntity<?> logout(@RequestHeader("Authorization") String
+  // authHeader) {
+  // try {
+  //
+  // } catch (Exception e) {
+  // // TODO: handle exception
+  // }
+  // }
 }

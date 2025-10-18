@@ -16,10 +16,10 @@ import org.springframework.stereotype.Service;
 @Service
 public class UserService {
 
-  @Autowired private UserRepository userRepository;
+  @Autowired
+  private UserRepository userRepository;
 
-  private static final PasswordEncoder PASSWORD_ENCODER =
-      new BCryptPasswordEncoder();
+  private static final PasswordEncoder PASSWORD_ENCODER = new BCryptPasswordEncoder();
 
   @Transactional
   public void saveUser(User user) {
@@ -32,7 +32,6 @@ public class UserService {
     user.setPassword(PASSWORD_ENCODER.encode(user.getPassword()));
     user.setCreateadAt(LocalDateTime.now());
     user.setBalance(BigDecimal.ZERO);
-    // user.getRole().add("USER");
     user.setRole(List.of("USER"));
     user.setLastActive(LocalDateTime.now());
     user.setStatus("Active");

@@ -1,4 +1,4 @@
-// TODO update stock price
+// TODO: update stock price
 package com.uiet.TradingApp.service;
 
 import com.uiet.TradingApp.entity.Stock;
@@ -16,9 +16,12 @@ import org.springframework.stereotype.Service;
 @Service
 public class TradeService {
 
-  @Autowired private TradeRepository tradeRepository;
-  @Autowired private UserService userService;
-  @Autowired private PortfolioService portfolioService;
+  @Autowired
+  private TradeRepository tradeRepository;
+  @Autowired
+  private UserService userService;
+  @Autowired
+  private PortfolioService portfolioService;
 
   @Transactional
   public void newEntry(Trade trade) {
@@ -30,14 +33,14 @@ public class TradeService {
   }
 
   public Trade newTrade(User buyer, User seller, Stock stock, Long quantity,
-                        BigDecimal price) {
+      BigDecimal price) {
     Trade newTrade = Trade.builder()
-                         .buyer(buyer)
-                         .seller(seller)
-                         .stock(stock)
-                         .quantity(quantity)
-                         .price(price)
-                         .build();
+        .buyer(buyer)
+        .seller(seller)
+        .stock(stock)
+        .quantity(quantity)
+        .price(price)
+        .build();
     log.info("INFO: Creating new trade entry for symbol {}", stock.getSymbol());
     return newTrade;
   }
@@ -50,8 +53,7 @@ public class TradeService {
   @Transactional
   public void sendBalance(Trade trade) {
 
-    BigDecimal toSend =
-        trade.getPrice().multiply(BigDecimal.valueOf(trade.getQuantity()));
+    BigDecimal toSend = trade.getPrice().multiply(BigDecimal.valueOf(trade.getQuantity()));
     log.info("INFO: Sending balance {} to {}", toSend, trade.getSeller());
     userService.addBalance(trade.getSeller(), toSend);
   }
@@ -59,8 +61,8 @@ public class TradeService {
   @Transactional
   public void addStocks(Trade trade) {
     log.info("INFO: Adding stocks quantity {} for user {}", trade.getQuantity(),
-             trade.getBuyer());
+        trade.getBuyer());
     portfolioService.addStocks(trade.getBuyer(), trade.getQuantity(),
-                               trade.getStock());
+        trade.getStock());
   }
 }

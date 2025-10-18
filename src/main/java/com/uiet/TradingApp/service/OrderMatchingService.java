@@ -1,4 +1,3 @@
-// TODO transactions
 package com.uiet.TradingApp.service;
 
 import com.uiet.TradingApp.entity.Enum.OrderStatus;
@@ -13,24 +12,24 @@ import org.springframework.stereotype.Service;
 @Slf4j
 @Service
 public class OrderMatchingService {
-  @Autowired private OrderService orderService;
-  @Autowired private TradeService tradeService;
+  @Autowired
+  private OrderService orderService;
+  @Autowired
+  private TradeService tradeService;
 
   @Transactional
   public void buyOrderMatcher(Order buyOrder) {
 
     Long neededStocks = buyOrder.getQuantity();
     Long fulfilledStocks = 0L;
-    List<OrderStatus> status =
-        List.of(OrderStatus.PENDING, OrderStatus.PARTIALLY_FILLED);
+    List<OrderStatus> status = List.of(OrderStatus.PENDING, OrderStatus.PARTIALLY_FILLED);
     List<Order> sellOrders = orderService.buyOrderMatcherHelper(
         buyOrder.getStock(), OrderType.SELL, status, buyOrder.getPrice());
     int i = 0;
     while (fulfilledStocks < neededStocks && i < sellOrders.size()) {
       Order sellOrder = sellOrders.get(i);
       Long currentOrderQuantity = sellOrder.getQuantity();
-      if (currentOrderQuantity + fulfilledStocks <=
-          neededStocks) { // FULLY FILLED sellOrder
+      if (currentOrderQuantity + fulfilledStocks <= neededStocks) { // FULLY FILLED sellOrder
         fulfilledStocks += currentOrderQuantity;
         sellOrder.setStatus(OrderStatus.FILLED);
         log.info("INFO: FULLY FILLED Sell Order {}", sellOrder.getId());
@@ -39,8 +38,7 @@ public class OrderMatchingService {
             buyOrder.getUser(), sellOrder.getUser(), buyOrder.getStock(),
             sellOrder.getQuantity(), sellOrder.getPrice()));
 
-      } else if (currentOrderQuantity + fulfilledStocks >
-                 neededStocks) { // PARTIALLY FILLED sellOrder
+      } else if (currentOrderQuantity + fulfilledStocks > neededStocks) { // PARTIALLY FILLED sellOrder
         sellOrder.setStatus(OrderStatus.PARTIALLY_FILLED);
         log.info("INFO: PARTIALLY FILLED Sell Order {}", sellOrder.getId());
         Long quantity = currentOrderQuantity - (neededStocks - fulfilledStocks);
@@ -69,8 +67,7 @@ public class OrderMatchingService {
   public void sellOrderMatcher(Order sellOrder) {
     Long sellingStocks = sellOrder.getQuantity();
     Long soldStocks = 0L;
-    List<OrderStatus> status =
-        List.of(OrderStatus.PENDING, OrderStatus.PARTIALLY_FILLED);
+    List<OrderStatus> status = List.of(OrderStatus.PENDING, OrderStatus.PARTIALLY_FILLED);
     List<Order> buyOrders = orderService.sellOrderMatcherHelper(
         sellOrder.getStock(), OrderType.BUY, status, sellOrder.getPrice());
 
@@ -86,12 +83,11 @@ public class OrderMatchingService {
             buyOrder.getUser(), sellOrder.getUser(), buyOrder.getStock(),
             sellOrder.getQuantity(), sellOrder.getPrice()));
         soldStocks += currentOrderQuantity;
-      } else if (currentOrderQuantity + soldStocks >
-                 sellingStocks) { // PARTIALLY FILLED
+      } else if (currentOrderQuantity + soldStocks > sellingStocks) { // PARTIALLY FILLED
         buyOrder.setStatus(OrderStatus.PARTIALLY_FILLED);
         log.info("INFO: PARTIALLY FILLED Buy Order {}", buyOrder.getId());
         buyOrder.setQuantity(currentOrderQuantity -
-                             (sellingStocks - soldStocks));
+            (sellingStocks - soldStocks));
 
         tradeService.newEntry(tradeService.newTrade(
             buyOrder.getUser(), sellOrder.getUser(), buyOrder.getStock(),

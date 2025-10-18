@@ -1,5 +1,6 @@
 package com.uiet.TradingApp.entity;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -16,11 +17,17 @@ import lombok.Data;
 @Entity
 @Table(name = "users")
 public class User {
-  @Id @GeneratedValue(strategy = GenerationType.IDENTITY) private Long id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
+  @Column(unique = true, nullable = false)
   private String userName;
+  @Column(nullable = false)
   private String password;
+  @Column(unique = true, nullable = false)
   private String email;
-  @ElementCollection(fetch = FetchType.EAGER) private List<String> role;
+  @ElementCollection(fetch = FetchType.EAGER)
+  private List<String> role;
   private LocalDateTime createadAt;
   private LocalDateTime lastActive;
   private BigDecimal balance;

@@ -11,8 +11,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class JwtUtil {
-  private String SECRET_KEY =
-      "b116e8f70c8bf981fde822195a3ca6c44faa7108b4c5d43c";
+  private String SECRET_KEY = "b116e8f70c8bf981fde822195a3ca6c44faa7108b4c5d43c";
 
   public String generateToken(String userName) {
     Map<String, Object> claims = new HashMap<>();
@@ -42,7 +41,9 @@ public class JwtUtil {
     return extractAllClaims(token).getSubject();
   }
 
-  public Boolean validateToken(String token) { return !isTokenExpired(token); }
+  public Boolean validateToken(String token) {
+    return !isTokenExpired(token);
+  }
 
   private boolean isTokenExpired(String token) {
     return extractExpiration(token).before(new Date());

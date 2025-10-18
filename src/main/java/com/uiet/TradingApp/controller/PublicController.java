@@ -23,11 +23,16 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/public")
 public class PublicController {
-  @Autowired private UserService userService;
-  @Autowired private AuthenticationManager authenticationManager;
-  @Autowired private UserDetailsService userDetailsService;
-  @Autowired private JwtUtil jwtUtil;
-  @Autowired private UserRepository userRepository;
+  @Autowired
+  private UserService userService;
+  @Autowired
+  private AuthenticationManager authenticationManager;
+  @Autowired
+  private UserDetailsService userDetailsService;
+  @Autowired
+  private JwtUtil jwtUtil;
+  @Autowired
+  private UserRepository userRepository;
 
   @GetMapping("/health-check")
   public String healthCheck() {
@@ -45,9 +50,8 @@ public class PublicController {
     try {
       authenticationManager.authenticate(
           new UsernamePasswordAuthenticationToken(authRequest.getUserName(),
-                                                  authRequest.getPassword()));
-      UserDetails userDetails =
-          userDetailsService.loadUserByUsername(authRequest.getUserName());
+              authRequest.getPassword()));
+      UserDetails userDetails = userDetailsService.loadUserByUsername(authRequest.getUserName());
       String jwtToken = jwtUtil.generateToken(userDetails.getUsername());
       return ResponseEntity.ok(jwtToken);
 
@@ -64,12 +68,15 @@ public class PublicController {
     return ResponseEntity.ok("User deleted successfully");
   }
 
-  @GetMapping("/make-admin/{}")
+  @GetMapping("/make-admin/{username}")
   public ResponseEntity<?> makeUserAdmin(@PathVariable String username) {
 
     User user = userRepository.findByUserName(username).orElseThrow(
         () -> new RuntimeException("User not found"));
-    user.getRole().add("ADMIN");
+    List<String> roles = user.getRole();
+    roles.add("ADMIN");
+    user.setRole(roles);
+    userService.saveUser(user);
     return ResponseEntity.ok("User made admin successfully");
   }
 }
