@@ -4,8 +4,10 @@ import com.uiet.TradingApp.DTO.UserDTO;
 import com.uiet.TradingApp.entity.User;
 import com.uiet.TradingApp.repository.UserRepository;
 import com.uiet.TradingApp.service.UserService;
+import com.uiet.TradingApp.utils.JwtUtil;
 import java.util.List;
 import java.util.Optional;
+import org.apache.tomcat.util.net.openssl.ciphers.Authentication;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -14,6 +16,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -28,12 +31,7 @@ public class UserController {
 
   @Autowired private UserService userService;
   @Autowired private UserRepository userRepository;
-
-  @PostMapping("/create-user")
-  public ResponseEntity<User> createUser(@RequestBody User user) {
-    userService.createUser(user);
-    return new ResponseEntity<>(user, HttpStatus.CREATED);
-  }
+  @Autowired private JwtUtil jwtUtil;
 
   @GetMapping("/find-user/{userName}")
   public ResponseEntity<?> findUser(@PathVariable String userName) {
@@ -48,14 +46,22 @@ public class UserController {
     }
   }
 
-  @DeleteMapping("/delete/{userName}")
-  public ResponseEntity<?> deleteUser(@PathVariable String userName) {
-    Optional<User> user = userRepository.findByUserName(userName);
-    if (!user.isPresent()) {
-      return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-    } else {
-      userRepository.delete(user.get());
+  @DeleteMapping("/delete")
+  public ResponseEntity<?>
+  deleteUser(@RequestHeader("Authorization") String authHeader) {
+    // Optional<User> user = userRepository.findByUserName(userName);
+    // if (!user.isPresent()) {
+    // return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+    // } else {
+    // userRepository.delete(user.get());
+    // return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    // }
+    try {
+      String userName = jwtUtil.extractUsername(authHeader);
+      userService.deleteUser(userName);
       return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    } catch (Exception e) {
+      return new ResponseEntity<>(HttpStatus.FORBIDDEN);
     }
   }
 

@@ -9,14 +9,17 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+@Slf4j
 @Service
 public class StockService {
   @Autowired StockRepository stockRepository;
 
   public Optional<Stock> getStockBySymbol(String symbol) {
+    log.info("INFO: Getting stock by symbol {}", symbol);
     return stockRepository.findBySymbol(symbol);
   }
 
@@ -31,18 +34,22 @@ public class StockService {
 
       stock.setLowPrice(soldPrice);
     }
+    log.info("INFO: Updating stock price for symbol {}", stock.getSymbol());
     saveEntry(stock);
   }
 
   @Transactional
   public void updateTradedVolume(Stock stock, Long quantity) {
     stock.setTradedVolume(stock.getTradedVolume() + quantity);
+    log.info("INFO: Updating stock traded volume for symbol {}",
+             stock.getSymbol());
     saveEntry(stock);
   }
 
   @Transactional
   public void saveEntry(Stock stock) {
     stock.setLastUpdated(LocalDateTime.now());
+    log.info("INFO: Saving stock entry for symbol {}", stock.getSymbol());
     stockRepository.save(stock);
   }
 
@@ -51,15 +58,20 @@ public class StockService {
     stock.setOpenPrice(stock.getCurrentPrice());
     stock.setTradedVolume(0L);
     stock.setClosePrice(BigDecimal.valueOf(0.0));
+    log.info("INFO: Creating new stock entry for symbol {}", stock.getSymbol());
+    stockRepository.save(stock);
   }
 
   @Transactional
   public void changetotalStocks(Stock stock, Long newQuantity) {
     stock.setTotalStocks(newQuantity);
+    log.info("INFO: Updating stock total stocks for symbol {}",
+             stock.getSymbol());
     saveEntry(stock);
   }
 
   public List<Portfolio> getPortfolios(Stock stock) {
+    log.info("INFO: Getting stock portfolio for symbol {}", stock.getSymbol());
     return stock.getPortfolio();
   }
 
@@ -75,6 +87,7 @@ public class StockService {
                             .company_name(stock.getCompany().getName())
                             .sector(stock.getCompany().getSector())
                             .build();
+    log.info("INFO: Creating stock DTO for symbol {}", stock.getSymbol());
     return stockDTO;
   }
 
@@ -85,12 +98,17 @@ public class StockService {
           stockRepository
               .findByCompany_NameContainingIgnoreCaseAndCompany_SectorIgnoreCase(
                   companyName, sector);
+      log.info("INFO: Searching stocks by company name {} and sector {}",
+               companyName, sector);
     } else if (!companyName.equals("null")) {
       stocks =
           stockRepository.findByCompany_NameContainingIgnoreCase(companyName);
+      log.info("INFO: Searching stocks by company name {}", companyName);
     } else if (!sector.equals("null")) {
       stocks = stockRepository.findByCompany_SectorIgnoreCase(sector);
+      log.info("INFO: Searching stocks by sector {}", sector);
     } else {
+      log.info("INFO: Searching all stocks");
       stocks = stockRepository.findAll();
     }
     return stocks.stream().map(this::dtoBuilder).toList();

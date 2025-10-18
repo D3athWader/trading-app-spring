@@ -1,12 +1,15 @@
 package com.uiet.TradingApp.entity;
 
+import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 import lombok.Data;
 
 @Data
@@ -17,7 +20,7 @@ public class User {
   private String userName;
   private String password;
   private String email;
-  private String role;
+  @ElementCollection(fetch = FetchType.EAGER) private List<String> role;
   private LocalDateTime createadAt;
   private LocalDateTime lastActive;
   private BigDecimal balance;

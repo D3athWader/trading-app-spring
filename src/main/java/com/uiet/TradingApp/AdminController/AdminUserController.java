@@ -23,7 +23,7 @@ public class AdminUserController {
     try {
       User user = userRepository.findByUserName(username).orElseThrow(
           () -> new Exception("Username not found"));
-      user.setRole("ADMIN");
+      user.getRole().add("ADMIN");
       userService.saveUser(user);
       return new ResponseEntity<>("User " + username + " is now admin",
                                   HttpStatus.CREATED);

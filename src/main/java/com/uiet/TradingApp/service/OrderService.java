@@ -10,10 +10,12 @@ import jakarta.transaction.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
+@Slf4j
 @Service
 public class OrderService {
 
@@ -31,6 +33,7 @@ public class OrderService {
       order.setType(OrderType.SELL);
       order.setStatus(OrderStatus.PENDING);
       order.setTimestamp(LocalDateTime.now());
+      log.info("INFO: Placing sell order for {}", order.getStock().getSymbol());
       portfolioService.removeStocks(order.getUser(), order.getQuantity(),
                                     order.getStock());
       orderRepository.save(order);
@@ -51,6 +54,7 @@ public class OrderService {
       order.setTimestamp(LocalDateTime.now());
       order.setPrice(order.getStock().getCurrentPrice());
       userService.deductBalance(order.getUser(), orderValue);
+      log.info("INFO: Placing buy order for {}", order.getStock().getSymbol());
       orderRepository.save(order);
       orderMatchingService.buyOrderMatcher(order);
     } else {
@@ -72,10 +76,12 @@ public class OrderService {
     OrderStatus status = order.getStatus();
     if (status.equals(OrderStatus.FILLED) ||
         status.equals(OrderStatus.CANCELLED)) {
+      log.error("ERROR: Order {} already filled or cancelled", order.getId());
       throw new RuntimeException("Order already filled or cancelled");
     } else {
       OrderType type = order.getType();
       order.setStatus(OrderStatus.CANCELLED);
+      log.info("INFO: Cancelled order for {}", order.getStock().getSymbol());
       if (type.equals(OrderType.BUY)) {
         userService.addBalance(
             order.getUser(),

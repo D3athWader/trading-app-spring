@@ -1,13 +1,17 @@
 TODO's
-Add HTTPs
-Add JWT authentication
-Add multithreading
+Add HTTPs \n
+
+<!-- Add JWT authentication -->
+
+<!-- Add multithreading -->
+
 Add Kafka queues
 Add logging
 Add Redis,docker
 Redis b/w sql and server
 Add email verification
 Add SMTP server
+Add Email verification
 Add websockets
 idk how would websockets integrate here
 Add project wide exception handler class and service

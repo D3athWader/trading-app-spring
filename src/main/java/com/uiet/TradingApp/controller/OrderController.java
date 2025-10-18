@@ -3,6 +3,7 @@ package com.uiet.TradingApp.controller;
 import com.uiet.TradingApp.entity.Order;
 import com.uiet.TradingApp.repository.OrderRepository;
 import com.uiet.TradingApp.service.OrderService;
+import com.uiet.TradingApp.utils.JwtUtil;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -22,6 +24,7 @@ public class OrderController {
   // TODO add from time search
   @Autowired private OrderService orderService;
   @Autowired private OrderRepository orderRepository;
+  @Autowired private JwtUtil jwtUtil;
 
   @PostMapping("/buy-order")
   public ResponseEntity<?> buyOrder(@RequestBody Order order) {
@@ -88,7 +91,13 @@ public class OrderController {
   }
 
   @GetMapping("/all")
-  public ResponseEntity<?> getAllOrders() {
-    return ResponseEntity.ok(orderRepository.findAll());
+  public ResponseEntity<?>
+  getAllOrders(@RequestHeader("Authorization") String authHeader) {
+    try {
+      String username = jwtUtil.extractUsername(authHeader);
+      return ResponseEntity.ok(orderRepository.findByUser_UserName(username));
+    } catch (Exception e) {
+      return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+    }
   }
 }

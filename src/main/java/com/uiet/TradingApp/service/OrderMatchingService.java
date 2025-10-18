@@ -6,9 +6,11 @@ import com.uiet.TradingApp.entity.Enum.OrderType;
 import com.uiet.TradingApp.entity.Order;
 import jakarta.transaction.Transactional;
 import java.util.List;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+@Slf4j
 @Service
 public class OrderMatchingService {
   @Autowired private OrderService orderService;
@@ -31,6 +33,7 @@ public class OrderMatchingService {
           neededStocks) { // FULLY FILLED sellOrder
         fulfilledStocks += currentOrderQuantity;
         sellOrder.setStatus(OrderStatus.FILLED);
+        log.info("INFO: FULLY FILLED Sell Order {}", sellOrder.getId());
         orderService.saveEntry(sellOrder);
         tradeService.newEntry(tradeService.newTrade(
             buyOrder.getUser(), sellOrder.getUser(), buyOrder.getStock(),
@@ -39,6 +42,7 @@ public class OrderMatchingService {
       } else if (currentOrderQuantity + fulfilledStocks >
                  neededStocks) { // PARTIALLY FILLED sellOrder
         sellOrder.setStatus(OrderStatus.PARTIALLY_FILLED);
+        log.info("INFO: PARTIALLY FILLED Sell Order {}", sellOrder.getId());
         Long quantity = currentOrderQuantity - (neededStocks - fulfilledStocks);
         Long tradedQty = neededStocks - fulfilledStocks;
         sellOrder.setQuantity(quantity);
@@ -52,9 +56,11 @@ public class OrderMatchingService {
     }
     if (fulfilledStocks == neededStocks) {
       buyOrder.setStatus(OrderStatus.FILLED);
+      log.info("INFO: FULLY FILLED Buy Order {}", buyOrder.getId());
     } else if (fulfilledStocks > 0L && fulfilledStocks < neededStocks) {
       buyOrder.setStatus(OrderStatus.PARTIALLY_FILLED);
       buyOrder.setQuantity(neededStocks - fulfilledStocks);
+      log.info("INFO: PARTIALLY FILLED Buy Order {}", buyOrder.getId());
     }
     orderService.saveEntry(buyOrder);
   }
@@ -74,6 +80,7 @@ public class OrderMatchingService {
       Long currentOrderQuantity = buyOrder.getQuantity();
       if (currentOrderQuantity + soldStocks <= sellingStocks) { // FULLY FILLED
         buyOrder.setStatus(OrderStatus.FILLED);
+        log.info("INFO: FULLY FILLED Buy Order {}", buyOrder.getId());
         orderService.saveEntry(buyOrder);
         tradeService.newEntry(tradeService.newTrade(
             buyOrder.getUser(), sellOrder.getUser(), buyOrder.getStock(),
@@ -82,6 +89,7 @@ public class OrderMatchingService {
       } else if (currentOrderQuantity + soldStocks >
                  sellingStocks) { // PARTIALLY FILLED
         buyOrder.setStatus(OrderStatus.PARTIALLY_FILLED);
+        log.info("INFO: PARTIALLY FILLED Buy Order {}", buyOrder.getId());
         buyOrder.setQuantity(currentOrderQuantity -
                              (sellingStocks - soldStocks));
 
@@ -95,9 +103,11 @@ public class OrderMatchingService {
     }
     if (soldStocks == sellingStocks) {
       sellOrder.setStatus(OrderStatus.FILLED);
+      log.info("INFO: FULLY FILLED Sell Order {}", sellOrder.getId());
     } else if (soldStocks > 0L && soldStocks < sellingStocks) {
       sellOrder.setStatus(OrderStatus.PARTIALLY_FILLED);
       sellOrder.setQuantity(sellingStocks - soldStocks);
+      log.info("INFO: PARTIALLY FILLED Sell Order {}", sellOrder.getId());
     }
     orderService.saveEntry(sellOrder);
   }

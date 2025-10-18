@@ -6,9 +6,11 @@ import jakarta.transaction.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+@Slf4j
 @Service
 public class CompanyService {
 
@@ -34,6 +36,7 @@ public class CompanyService {
   // marketCap should be calculated correctly
   @Transactional
   public void newEntry(Company company) {
+    log.info("INFO: Creating new company {}", company.getName());
     company.setMarketCap(0.00);
     company.setCreatedAt(LocalDateTime.now());
     companyRepository.save(company);
@@ -43,7 +46,7 @@ public class CompanyService {
 
   @Transactional
   public void deleteEntry(Company company) {
-
+    log.info("INFO: Deleting company {}", company.getName());
     companyRepository.delete(company);
   }
 
