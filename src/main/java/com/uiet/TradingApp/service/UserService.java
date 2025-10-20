@@ -32,7 +32,7 @@ public class UserService {
     user.setPassword(PASSWORD_ENCODER.encode(user.getPassword()));
     user.setCreateadAt(LocalDateTime.now());
     user.setBalance(BigDecimal.ZERO);
-    user.setRole(List.of("USER"));
+    // user.setRole(List.of("USER"));
     user.setLastActive(LocalDateTime.now());
     user.setStatus("Active");
     log.info("INFO: Creating user {}", user.getUserName());

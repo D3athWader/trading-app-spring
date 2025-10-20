@@ -27,7 +27,26 @@ public class JwtUtil {
         .add("typ", "JWT")
         .and()
         .issuedAt(new Date(System.currentTimeMillis()))
-        .expiration(new Date(System.currentTimeMillis() + 1000 * 60 * 5))
+        .expiration(new Date(System.currentTimeMillis() + 1000 * 60 * 10))
+        .signWith(getSigningKey())
+        .compact();
+  }
+
+  public String generateEmailVerificationToken(String userName) {
+    Map<String, Object> claims = new HashMap<>();
+    return createEmailToken(claims, userName);
+  }
+
+  private String createEmailToken(Map<String, Object> claims, String subject) {
+    return Jwts.builder()
+        .claims(claims)
+        .subject(subject)
+        .header()
+        .empty()
+        .add("typ", "JWT")
+        .and()
+        .issuedAt(new Date(System.currentTimeMillis()))
+        .expiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60))
         .signWith(getSigningKey())
         .compact();
   }

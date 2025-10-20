@@ -17,20 +17,18 @@ import lombok.Data;
 @Entity
 @Table(name = "users")
 public class User {
-  @Id
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
-  private Long id;
-  @Column(unique = true, nullable = false)
-  private String userName;
-  @Column(nullable = false)
-  private String password;
-  @Column(unique = true, nullable = false)
-  private String email;
-  @ElementCollection(fetch = FetchType.EAGER)
-  private List<String> role;
+  @Id @GeneratedValue(strategy = GenerationType.IDENTITY) private Long id;
+  @Column(unique = true, nullable = false) private String userName;
+  @Column(nullable = false) private String password;
+  @Column(unique = true, nullable = false) private String email;
+  @ElementCollection(fetch = FetchType.EAGER) private List<String> role;
   private LocalDateTime createadAt;
   private LocalDateTime lastActive;
   private BigDecimal balance;
   private String country;
   private String status; // Account is active , not logged in , suspended
+  // EMAIL VERIFICATION
+  private String verificationToken;
+  @Column(nullable = false) private boolean isVerified;
+  private String resetToken;
 }

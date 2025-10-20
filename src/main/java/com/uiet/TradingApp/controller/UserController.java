@@ -3,10 +3,12 @@ package com.uiet.TradingApp.controller;
 import com.uiet.TradingApp.DTO.UserDTO;
 import com.uiet.TradingApp.entity.User;
 import com.uiet.TradingApp.repository.UserRepository;
+import com.uiet.TradingApp.service.TempService;
 import com.uiet.TradingApp.service.UserService;
 import com.uiet.TradingApp.utils.JwtUtil;
 import java.util.List;
 import java.util.Optional;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.tomcat.util.net.openssl.ciphers.Authentication;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -21,6 +23,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
+@Slf4j
 @RequestMapping("user-panel")
 public class UserController {
 
@@ -29,12 +32,10 @@ public class UserController {
     return new String("Hello Controller");
   }
 
-  @Autowired
-  private UserService userService;
-  @Autowired
-  private UserRepository userRepository;
-  @Autowired
-  private JwtUtil jwtUtil;
+  @Autowired private UserService userService;
+  @Autowired private UserRepository userRepository;
+  @Autowired private JwtUtil jwtUtil;
+  @Autowired private TempService tempService;
 
   @GetMapping("/find-user/{userName}")
   public ResponseEntity<?> findUser(@PathVariable String userName) {
@@ -43,20 +44,15 @@ public class UserController {
       return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     } else {
       User localUser = user.get();
-      UserDTO sendUser = new UserDTO(localUser.getId(), userName, localUser.getCountry());
+      UserDTO sendUser =
+          new UserDTO(localUser.getId(), userName, localUser.getCountry());
       return new ResponseEntity<>(sendUser, HttpStatus.OK);
     }
   }
 
   @DeleteMapping("/delete")
-  public ResponseEntity<?> deleteUser(@RequestHeader("Authorization") String authHeader) {
-    // Optional<User> user = userRepository.findByUserName(userName);
-    // if (!user.isPresent()) {
-    // return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-    // } else {
-    // userRepository.delete(user.get());
-    // return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-    // }
+  public ResponseEntity<?>
+  deleteUser(@RequestHeader("Authorization") String authHeader) {
     try {
       String jwtToken = authHeader.substring(7);
       String userName = jwtUtil.extractUsername(jwtToken);
@@ -77,13 +73,18 @@ public class UserController {
     }
   }
 
-  // @GetMapping("/logout")
-  // public ResponseEntity<?> logout(@RequestHeader("Authorization") String
-  // authHeader) {
-  // try {
-  //
-  // } catch (Exception e) {
-  // // TODO: handle exception
-  // }
-  // }
+  @GetMapping("/logout")
+  public ResponseEntity<?>
+  logout(@RequestHeader("Authorization") String authHeader) {
+    String token = authHeader.substring(7);
+    try {
+      tempService.newEntry(token);
+      log.info("logged out {}", token);
+      return ResponseEntity.status(HttpStatus.OK).body("Logout successful");
+    } catch (Exception e) {
+      log.error("Error in logout {}", e);
+      return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+          .body("Error in logout");
+    }
+  }
 }
