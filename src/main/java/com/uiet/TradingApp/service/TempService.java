@@ -2,11 +2,12 @@ package com.uiet.TradingApp.service;
 
 import com.uiet.TradingApp.entity.Temp;
 import com.uiet.TradingApp.repository.TempRepository;
-import jakarta.transaction.Transactional;
 import java.time.LocalDateTime;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Slf4j

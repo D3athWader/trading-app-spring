@@ -39,10 +39,19 @@ public class JwtFilter extends OncePerRequestFilter {
       filterChain.doFilter(request, response);
       return;
     }
+    if (authorizationHeader == null ||
+        !authorizationHeader.startsWith("Bearer ")) {
+      filterChain.doFilter(request, response);
+      return;
+    }
     if (authorizationHeader != null &&
         authorizationHeader.startsWith("Bearer ")) {
-      jwt = authorizationHeader.substring(7);
-      username = jwtUtil.extractUsername(jwt);
+      try {
+        jwt = authorizationHeader.substring(7);
+        username = jwtUtil.extractUsername(jwt);
+      } catch (Exception e) {
+        log.error("Error in JWT filter {}", e);
+      }
     }
     if (tempService.checkEntry(jwt)) {
       log.warn("Rejected blacklisted JWT for user: {}", username);

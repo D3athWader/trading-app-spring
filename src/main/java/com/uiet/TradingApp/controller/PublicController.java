@@ -6,17 +6,19 @@ import com.uiet.TradingApp.repository.UserRepository;
 import com.uiet.TradingApp.service.EmailService;
 import com.uiet.TradingApp.service.UserService;
 import com.uiet.TradingApp.utils.JwtUtil;
-import jakarta.transaction.Transactional;
 import java.util.List;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -28,18 +30,12 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/public")
 @Slf4j
 public class PublicController {
-  @Autowired
-  private UserService userService;
-  @Autowired
-  private AuthenticationManager authenticationManager;
-  @Autowired
-  private UserDetailsService userDetailsService;
-  @Autowired
-  private JwtUtil jwtUtil;
-  @Autowired
-  private UserRepository userRepository;
-  @Autowired
-  private EmailService emailService;
+  @Autowired private UserService userService;
+  @Autowired private AuthenticationManager authenticationManager;
+  @Autowired private UserDetailsService userDetailsService;
+  @Autowired private JwtUtil jwtUtil;
+  @Autowired private UserRepository userRepository;
+  @Autowired private EmailService emailService;
 
   @GetMapping("/health-check")
   public String healthCheck() {
@@ -68,8 +64,9 @@ public class PublicController {
     try {
       authenticationManager.authenticate(
           new UsernamePasswordAuthenticationToken(authRequest.getUserName(),
-              authRequest.getPassword()));
-      UserDetails userDetails = userDetailsService.loadUserByUsername(authRequest.getUserName());
+                                                  authRequest.getPassword()));
+      UserDetails userDetails =
+          userDetailsService.loadUserByUsername(authRequest.getUserName());
       String jwtToken = jwtUtil.generateToken(userDetails.getUsername());
       return ResponseEntity.ok(jwtToken);
 
@@ -80,18 +77,22 @@ public class PublicController {
     }
   }
 
+  @Async
   @PostMapping("/verify")
   public ResponseEntity<?> verifyEmail(@RequestBody AuthRequest authRequest) {
     try {
       authenticationManager.authenticate(
           new UsernamePasswordAuthenticationToken(authRequest.getUserName(),
-              authRequest.getPassword()));
-      UserDetails userDetails = userDetailsService.loadUserByUsername(authRequest.getUserName());
-      User user = userRepository.findByUserName(userDetails.getUsername()).get();
+                                                  authRequest.getPassword()));
+      UserDetails userDetails =
+          userDetailsService.loadUserByUsername(authRequest.getUserName());
+      User user =
+          userRepository.findByUserName(userDetails.getUsername()).get();
       if (user.isVerified()) {
         return new ResponseEntity<>("Email already verified", HttpStatus.OK);
       }
-      String verificationToken = jwtUtil.generateEmailVerificationToken(user.getEmail());
+      String verificationToken =
+          jwtUtil.generateEmailVerificationToken(user.getEmail());
       user.setVerificationToken(verificationToken);
       emailService.sendVerificationEmail(user.getEmail(), verificationToken);
       userService.saveUser(user);
@@ -105,39 +106,34 @@ public class PublicController {
 
   @Transactional
   @GetMapping("/verification")
-  public ResponseEntity<?> verification(@RequestParam("token") String verificationToken) {
-    String emailString = jwtUtil.extractUsername(verificationToken);
-    Optional<User> opUser = userRepository.findByEmail(emailString);
-    if (opUser.isEmpty() || opUser.get().getVerificationToken() == null) {
-      return new ResponseEntity<>("No user found with this email",
-          HttpStatus.FORBIDDEN);
-    }
-    if (opUser.get().isVerified()) {
-      return new ResponseEntity<>("Email already verified",
-          HttpStatus.FORBIDDEN);
-    }
-    if (!jwtUtil.validateToken(verificationToken) ||
-        !opUser.get().getVerificationToken().equals(verificationToken)) {
+  public ResponseEntity<?>
+  verification(@RequestParam("token") String verificationToken) {
+    try {
 
-      return new ResponseEntity<>("Token invalid or expired",
-          HttpStatus.FORBIDDEN);
+      String emailString = jwtUtil.extractUsername(verificationToken);
+      Optional<User> opUser = userRepository.findByEmail(emailString);
+      if (opUser.isEmpty() || opUser.get().getVerificationToken() == null) {
+        return new ResponseEntity<>("No user found with this email",
+                                    HttpStatus.FORBIDDEN);
+      }
+      if (opUser.get().isVerified()) {
+        return new ResponseEntity<>("Email already verified",
+                                    HttpStatus.FORBIDDEN);
+      }
+      if (!jwtUtil.validateToken(verificationToken) ||
+          !opUser.get().getVerificationToken().equals(verificationToken)) {
+
+        return new ResponseEntity<>("Token invalid or expired",
+                                    HttpStatus.FORBIDDEN);
+      }
+      User user = opUser.get();
+      user.setVerificationToken(null);
+      user.setVerified(true);
+      user.setRole(List.of("USER"));
+      return new ResponseEntity<>("Email verified successfully", HttpStatus.OK);
+    } catch (Exception e) {
+      log.error("Error in verification {}", e);
+      return new ResponseEntity<>(e, HttpStatus.UNAUTHORIZED);
     }
-    User user = opUser.get();
-    User dbUser = userRepository.findById(user.getId()).get();
-    dbUser.setVerificationToken(null);
-    dbUser.setVerified(true);
-    dbUser.setRole(List.of("USER"));
-    // IDFK WHY THIS SHIT ONLY WORKS WHEN I DONT SAVE THE USER
-    // AND STILL GIVWEES ERRORRS FUCKING DOGSHIT LOGS OF HIBERNATE
-    // JUST VERBOSE EVERYWHERE NO USEFUL INFORMATION ANYWHERE
-    // SCROLL FOR 10 THOUSAND LINES FOR ONE ID IS NULL
-    // WHENNN ID IS NOT NULL
-    // GG
-    // AND MORE
-    // WITHOUT THE SAVEUSER FUNCTION HOW THE FUCK DOES IT AUTOMATICALLY SAVES
-    // ITSELF TO DB WHILE GIVING ERRORS! FUCKING SHITSTORM
-    // System.out.println("User id: " + user.getId());
-    // userService.saveUser(user);
-    return new ResponseEntity<>("Email verified successfully", HttpStatus.OK);
   }
 }

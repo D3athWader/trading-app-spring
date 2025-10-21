@@ -16,10 +16,13 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/admin")
 public class AdminUserController {
 
-  @Autowired
-  private UserService userService;
-  @Autowired
-  private UserRepository userRepository;
+  @Autowired private UserService userService;
+  @Autowired private UserRepository userRepository;
+
+  @GetMapping("/check")
+  public ResponseEntity<?> checkAdmin() {
+    return new ResponseEntity<>("You are admin", HttpStatus.OK);
+  }
 
   @GetMapping("/make-admin/{username}")
   public ResponseEntity<?> makeUserAdmin(@PathVariable String username) {
@@ -31,7 +34,7 @@ public class AdminUserController {
       user.setRole(roles);
       userService.saveUser(user);
       return new ResponseEntity<>("User " + username + " is now admin",
-          HttpStatus.CREATED);
+                                  HttpStatus.CREATED);
     } catch (Exception e) {
       return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
     }

@@ -4,7 +4,6 @@ import com.uiet.TradingApp.DTO.StockDTO;
 import com.uiet.TradingApp.entity.Portfolio;
 import com.uiet.TradingApp.entity.Stock;
 import com.uiet.TradingApp.repository.StockRepository;
-import jakarta.transaction.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -12,6 +11,8 @@ import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
