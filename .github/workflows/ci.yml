@@ -28,5 +28,5 @@ jobs:
 
       # Step 3: Runs the Maven command to build the project and run tests
       - name: Build and test with Maven
-        run: mvn -B clean package -DskipTests
+        run: mvn -B clean
         # git push git@github.com:${{ github.repository }} HEAD:main

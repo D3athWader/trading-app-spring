@@ -1,6 +1,7 @@
-// TODO: update stock price
+// DONE: update stock price
 package com.uiet.TradingApp.service;
 
+import com.uiet.TradingApp.entity.Company;
 import com.uiet.TradingApp.entity.Stock;
 import com.uiet.TradingApp.entity.Trade;
 import com.uiet.TradingApp.entity.User;
@@ -22,14 +23,25 @@ public class TradeService {
   private UserService userService;
   @Autowired
   private PortfolioService portfolioService;
+  @Autowired
+  private StockService stockService;
+  @Autowired
+  private CompanyService companyService;
 
   @Transactional
   public void newEntry(Trade trade) {
-    trade.setTimestamp(LocalDateTime.now());
-    sendBalance(trade);
-    addStocks(trade);
-    log.info("INFO: Creating new trade entry for symbol {}", trade.getStock());
-    tradeRepository.save(trade);
+    try {
+      trade.setTimestamp(LocalDateTime.now());
+      tradeRepository.save(trade);
+      sendBalance(trade);
+      addStocks(trade);
+      log.info("INFO: Creating new trade entry for symbol {}",
+          trade.getStock());
+      setPrices(trade);
+    } catch (Exception e) {
+      log.error("ERROR: Failed to create trade entry {}", trade.getStock());
+      throw e;
+    }
   }
 
   public Trade newTrade(User buyer, User seller, Stock stock, Long quantity,
@@ -40,6 +52,8 @@ public class TradeService {
         .stock(stock)
         .quantity(quantity)
         .price(price)
+        .sentBalance(false)
+        .sentStocks(false)
         .build();
     log.info("INFO: Creating new trade entry for symbol {}", stock.getSymbol());
     return newTrade;
@@ -50,19 +64,39 @@ public class TradeService {
     tradeRepository.delete(trade);
   }
 
-  @Transactional
   public void sendBalance(Trade trade) {
 
     BigDecimal toSend = trade.getPrice().multiply(BigDecimal.valueOf(trade.getQuantity()));
     log.info("INFO: Sending balance {} to {}", toSend, trade.getSeller());
     userService.addBalance(trade.getSeller(), toSend);
+    trade.setSentBalance(true);
   }
 
-  @Transactional
   public void addStocks(Trade trade) {
     log.info("INFO: Adding stocks quantity {} for user {}", trade.getQuantity(),
         trade.getBuyer());
     portfolioService.addStocks(trade.getBuyer(), trade.getQuantity(),
         trade.getStock());
+    trade.setSentStocks(true);
+  }
+
+  public void setPrices(Trade trade) {
+    log.info("INFO: Updating price for stock {}", trade.getStock());
+    Stock stock = trade.getStock();
+    stock.setCurrentPrice(trade.getPrice());
+    if (trade.getPrice().compareTo(trade.getStock().getHighPrice()) > 0) {
+      log.info("INFO: Updating high price for stock {}", trade.getStock());
+      stock.setHighPrice(trade.getPrice());
+    }
+    if (trade.getPrice().compareTo(trade.getStock().getLowPrice()) < 0) {
+      log.info("INFO: Updating low price for stock {}", trade.getStock());
+      stock.setLowPrice(trade.getPrice());
+    }
+    Company company = stock.getCompany();
+    company.setMarketCap(stock.getCurrentPrice().multiply(
+        BigDecimal.valueOf(stock.getTotalStocks())));
+    log.info("INFO: Updating market cap for company {}", company.getName());
+    companyService.saveEntry(company);
+    stockService.saveEntry(stock);
   }
 }

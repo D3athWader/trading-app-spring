@@ -1,21 +1,21 @@
 TODO's
-Add HTTPs
+Add HTTPs -- WILL DO IN THE END WHEN THERE IS A WORKING FRONT END
 
-<!-- Add JWT authentication -->
+Add JWT authentication -- DONE
 
-<!-- Add multithreading -->
+Add multithreading
 
 Add Kafka queues
 
-<!-- Add logging -->
+Add logging -- DONE
 
-Add Redis,docker
+<!-- Add Redis,docker -->
 
-Redis b/w sql and server
+<!-- Redis b/w sql and server -->
 
-Add SMTP server
+Add SMTP server -- DONE
 
-Add Email verification
+Add Email verification -- DONE
 
 Add websockets
 
@@ -31,10 +31,18 @@ multiple db support (In future)
 
 database pessimist writes
 
-Refactor for authentication
+<!-- Refactor for authentication -->
 
 Add JUnit tests
 
 Convert to microservices infrastructure
 
 FRONT END ?? no fucking idea
+
+LEFT TODOS:
+
+Kafka queues, Redis, websockets, OAuth2, multithreading, microservices, Tests, DOCKER
+
+LATER ONES:
+
+payment gateway, multiple db support exception handler, pessimist write ( a small one but ehh later )

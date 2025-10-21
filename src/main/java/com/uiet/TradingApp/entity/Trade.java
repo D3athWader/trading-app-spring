@@ -19,17 +19,31 @@ import lombok.Data;
 @Builder
 public class Trade {
 
-  @Id @GeneratedValue(strategy = GenerationType.IDENTITY) private long id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private long id;
 
-  @ManyToOne @JoinColumn(name = "buyer_id") private User buyer;
+  @ManyToOne
+  @JoinColumn(name = "buyer_id")
+  private User buyer;
 
-  @ManyToOne @JoinColumn(name = "seller_id") private User seller;
+  @ManyToOne
+  @JoinColumn(name = "seller_id")
+  private User seller;
 
-  @ManyToOne @JoinColumn(name = "stock_id") private Stock stock;
+  @ManyToOne
+  @JoinColumn(name = "stock_id")
+  private Stock stock;
 
-  @Column(nullable = false) private Long quantity;
+  @Column(nullable = false)
+  private Long quantity;
 
-  @Column(nullable = false, precision = 19, scale = 4) private BigDecimal price;
+  @Column(nullable = false, precision = 19, scale = 4)
+  private BigDecimal price;
 
   private LocalDateTime timestamp;
+  @Column(nullable = false)
+  private boolean sentBalance;
+  @Column(nullable = false)
+  private boolean sentStocks;
 }

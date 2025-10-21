@@ -4,7 +4,6 @@ import com.uiet.TradingApp.DTO.AuthRequest;
 import com.uiet.TradingApp.entity.User;
 import com.uiet.TradingApp.repository.UserRepository;
 import com.uiet.TradingApp.service.EmailService;
-import com.uiet.TradingApp.service.TempService;
 import com.uiet.TradingApp.service.UserService;
 import com.uiet.TradingApp.utils.JwtUtil;
 import jakarta.transaction.Transactional;
@@ -19,14 +18,11 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.server.ResponseStatusException;
 
 @RestController
 @RequestMapping("/public")
@@ -92,6 +88,9 @@ public class PublicController {
               authRequest.getPassword()));
       UserDetails userDetails = userDetailsService.loadUserByUsername(authRequest.getUserName());
       User user = userRepository.findByUserName(userDetails.getUsername()).get();
+      if (user.isVerified()) {
+        return new ResponseEntity<>("Email already verified", HttpStatus.OK);
+      }
       String verificationToken = jwtUtil.generateEmailVerificationToken(user.getEmail());
       user.setVerificationToken(verificationToken);
       emailService.sendVerificationEmail(user.getEmail(), verificationToken);
@@ -111,6 +110,10 @@ public class PublicController {
     Optional<User> opUser = userRepository.findByEmail(emailString);
     if (opUser.isEmpty() || opUser.get().getVerificationToken() == null) {
       return new ResponseEntity<>("No user found with this email",
+          HttpStatus.FORBIDDEN);
+    }
+    if (opUser.get().isVerified()) {
+      return new ResponseEntity<>("Email already verified",
           HttpStatus.FORBIDDEN);
     }
     if (!jwtUtil.validateToken(verificationToken) ||

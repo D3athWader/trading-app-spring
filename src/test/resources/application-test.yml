@@ -16,7 +16,16 @@ spring:
   # Disable mail server for tests to prevent connection errors
   mail:
     host: localhost
-    port: 1025 # Use a mock port, it won't actually connect
+    port: 1025
+    username: local
+    password: test
+    protocol: smtp
+    properties:
+      # mail:
+      #   smtp:
+      #     auth: true
+      #     starttls:
+      # enable: true
 
 # Optional: prevent tests from trying to run on a real server port
 server:
