@@ -9,7 +9,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -64,7 +63,8 @@ public class JwtFilter extends OncePerRequestFilter {
     }
     if (username != null) {
       UserDetails userDetails = userDetailsService.loadUserByUsername(username);
-      if (jwtUtil.validateToken(jwt)) {
+      boolean validateToken = jwtUtil.validateToken(jwt);
+      if (validateToken) {
         UsernamePasswordAuthenticationToken auth =
             new UsernamePasswordAuthenticationToken(
                 userDetails, null, userDetails.getAuthorities());

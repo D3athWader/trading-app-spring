@@ -7,11 +7,9 @@ import java.time.LocalDateTime;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
@@ -35,7 +33,6 @@ public class UserService {
     user.setPassword(PASSWORD_ENCODER.encode(user.getPassword()));
     user.setCreateadAt(LocalDateTime.now());
     user.setBalance(BigDecimal.ZERO);
-    // user.setRole(List.of("USER"));
     user.setLastActive(LocalDateTime.now());
     user.setStatus("Active");
     log.info("INFO: Creating user {}", user.getUserName());
@@ -86,9 +83,9 @@ public class UserService {
     userRepository.deleteByUserName(username);
   }
 
-  public void deleteUserById(Long Id) {
-    log.info("INFO: Deleting user by id {}", Id);
-    userRepository.deleteById(Id);
+  public void deleteUserById(Long id) {
+    log.info("INFO: Deleting user by id {}", id);
+    userRepository.deleteById(id);
   }
 
   public List<User> getAll() {

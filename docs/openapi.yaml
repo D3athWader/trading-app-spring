@@ -23,7 +23,7 @@ paths:
           content:
             '*/*':
               schema:
-                type: string
+                $ref: "#/components/schemas/ApiResponseVoid"
   /public/signup:
     post:
       tags:
@@ -59,7 +59,7 @@ paths:
           content:
             '*/*':
               schema:
-                type: object
+                $ref: "#/components/schemas/ApiResponseVoid"
   /order/sell-order:
     post:
       tags:
@@ -77,7 +77,7 @@ paths:
           content:
             '*/*':
               schema:
-                type: object
+                $ref: "#/components/schemas/ApiResponseVoid"
   /order/buy-order:
     post:
       tags:
@@ -95,7 +95,7 @@ paths:
           content:
             '*/*':
               schema:
-                type: object
+                $ref: "#/components/schemas/ApiResponseVoid"
   /admin/stock/new-stock:
     post:
       tags:
@@ -113,7 +113,7 @@ paths:
           content:
             '*/*':
               schema:
-                type: object
+                $ref: "#/components/schemas/ApiResponseStock"
   /admin/company/create-company:
     post:
       tags:
@@ -131,7 +131,7 @@ paths:
           content:
             '*/*':
               schema:
-                type: object
+                $ref: "#/components/schemas/ApiResponseCompany"
   /user-panel/logout:
     get:
       tags:
@@ -149,7 +149,7 @@ paths:
           content:
             '*/*':
               schema:
-                type: object
+                $ref: "#/components/schemas/ApiResponseVoid"
   /user-panel/hello:
     get:
       tags:
@@ -161,7 +161,7 @@ paths:
           content:
             '*/*':
               schema:
-                type: string
+                $ref: "#/components/schemas/ApiResponseVoid"
   /user-panel/find-user/{userName}:
     get:
       tags:
@@ -179,7 +179,7 @@ paths:
           content:
             '*/*':
               schema:
-                type: object
+                $ref: "#/components/schemas/ApiResponseUserDTO"
   /user-panel/all-users:
     get:
       tags:
@@ -191,7 +191,7 @@ paths:
           content:
             '*/*':
               schema:
-                type: object
+                $ref: "#/components/schemas/ApiResponseListUser"
   /user-panel/add-balance:
     get:
       tags:
@@ -214,7 +214,7 @@ paths:
           content:
             '*/*':
               schema:
-                type: object
+                $ref: "#/components/schemas/ApiResponseVoid"
   /stock/{id}:
     get:
       tags:
@@ -233,7 +233,7 @@ paths:
           content:
             '*/*':
               schema:
-                type: object
+                $ref: "#/components/schemas/ApiResponseStockDTO"
   /stock/search:
     get:
       tags:
@@ -256,7 +256,7 @@ paths:
           content:
             '*/*':
               schema:
-                type: object
+                $ref: "#/components/schemas/ApiResponseListStockDTO"
   /public/verification:
     get:
       tags:
@@ -274,7 +274,7 @@ paths:
           content:
             '*/*':
               schema:
-                type: object
+                $ref: "#/components/schemas/ApiResponseVoid"
   /public/health-check:
     get:
       tags:
@@ -304,7 +304,7 @@ paths:
           content:
             '*/*':
               schema:
-                type: object
+                $ref: "#/components/schemas/ApiResponseListOrder"
   /order/userId/{userId}:
     get:
       tags:
@@ -323,7 +323,7 @@ paths:
           content:
             '*/*':
               schema:
-                type: object
+                $ref: "#/components/schemas/ApiResponseListOrder"
   /order/all:
     get:
       tags:
@@ -341,7 +341,7 @@ paths:
           content:
             '*/*':
               schema:
-                type: object
+                $ref: "#/components/schemas/ApiResponseListOrder"
   /company/name/{companyName}:
     get:
       tags:
@@ -359,7 +359,7 @@ paths:
           content:
             '*/*':
               schema:
-                type: object
+                $ref: "#/components/schemas/ApiResponseCompanyDTO"
   /company/id/{id}:
     get:
       tags:
@@ -378,7 +378,7 @@ paths:
           content:
             '*/*':
               schema:
-                type: object
+                $ref: "#/components/schemas/ApiResponseCompanyDTO"
   /company/all:
     get:
       tags:
@@ -390,7 +390,7 @@ paths:
           content:
             '*/*':
               schema:
-                type: object
+                $ref: "#/components/schemas/ApiResponseListCompanyDTO"
   /admin/make-admin/{username}:
     get:
       tags:
@@ -408,7 +408,7 @@ paths:
           content:
             '*/*':
               schema:
-                type: object
+                $ref: "#/components/schemas/ApiResponseVoid"
   /admin/check:
     get:
       tags:
@@ -420,7 +420,7 @@ paths:
           content:
             '*/*':
               schema:
-                type: object
+                $ref: "#/components/schemas/ApiResponseVoid"
   /user-panel/delete:
     delete:
       tags:
@@ -438,7 +438,7 @@ paths:
           content:
             '*/*':
               schema:
-                type: object
+                $ref: "#/components/schemas/ApiResponseVoid"
   /order/cancel-order/{orderId}:
     delete:
       tags:
@@ -457,7 +457,7 @@ paths:
           content:
             '*/*':
               schema:
-                type: object
+                $ref: "#/components/schemas/ApiResponseVoid"
   /admin/stock/delete-stock/{id}:
     delete:
       tags:
@@ -476,7 +476,7 @@ paths:
           content:
             '*/*':
               schema:
-                type: object
+                $ref: "#/components/schemas/ApiResponseVoid"
   /admin/company/delete/{id}:
     delete:
       tags:
@@ -495,7 +495,7 @@ paths:
           content:
             '*/*':
               schema:
-                type: object
+                $ref: "#/components/schemas/ApiResponseVoid"
 components:
   schemas:
     AuthRequest:
@@ -505,6 +505,13 @@ components:
           type: string
         password:
           type: string
+    ApiResponseVoid:
+      type: object
+      properties:
+        message:
+          type: string
+        data:
+          type: object
     User:
       type: object
       properties:
@@ -656,3 +663,117 @@ components:
         company_id:
           type: integer
           format: int64
+    ApiResponseStock:
+      type: object
+      properties:
+        message:
+          type: string
+        data:
+          $ref: "#/components/schemas/Stock"
+    ApiResponseCompany:
+      type: object
+      properties:
+        message:
+          type: string
+        data:
+          $ref: "#/components/schemas/Company"
+    ApiResponseUserDTO:
+      type: object
+      properties:
+        message:
+          type: string
+        data:
+          $ref: "#/components/schemas/UserDTO"
+    UserDTO:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        userName:
+          type: string
+        country:
+          type: string
+    ApiResponseListUser:
+      type: object
+      properties:
+        message:
+          type: string
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/User"
+    ApiResponseStockDTO:
+      type: object
+      properties:
+        message:
+          type: string
+        data:
+          $ref: "#/components/schemas/StockDTO"
+    StockDTO:
+      type: object
+      properties:
+        symbol:
+          type: string
+        company_name:
+          type: string
+        sector:
+          type: string
+        currentPrice:
+          type: number
+        openPrice:
+          type: number
+        closePrice:
+          type: number
+        highPrice:
+          type: number
+        lowPrice:
+          type: number
+        tradedVolume:
+          type: integer
+          format: int64
+    ApiResponseListStockDTO:
+      type: object
+      properties:
+        message:
+          type: string
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/StockDTO"
+    ApiResponseListOrder:
+      type: object
+      properties:
+        message:
+          type: string
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Order"
+    ApiResponseCompanyDTO:
+      type: object
+      properties:
+        message:
+          type: string
+        data:
+          $ref: "#/components/schemas/CompanyDTO"
+    CompanyDTO:
+      type: object
+      properties:
+        name:
+          type: string
+        tickerSymbol:
+          type: string
+        sector:
+          type: string
+        marketCap:
+          type: number
+    ApiResponseListCompanyDTO:
+      type: object
+      properties:
+        message:
+          type: string
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/CompanyDTO"

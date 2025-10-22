@@ -1,5 +1,6 @@
 package com.uiet.TradingApp.controller;
 
+import com.uiet.TradingApp.DTO.ApiResponse;
 import com.uiet.TradingApp.DTO.StockDTO;
 import com.uiet.TradingApp.entity.Stock;
 import com.uiet.TradingApp.repository.StockRepository;
@@ -7,7 +8,6 @@ import com.uiet.TradingApp.service.StockService;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -27,23 +27,24 @@ public class StockController {
   private final StockRepository stockRepository;
 
   @GetMapping("/{id}")
-  public ResponseEntity<?> getStockById(@PathVariable Long id) {
+  public ResponseEntity<ApiResponse<StockDTO>>
+  getStockById(@PathVariable Long id) {
     Optional<Stock> stock = stockRepository.findById(id);
     if (!stock.isPresent()) {
       return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }
     StockDTO stockDTO = stockService.dtoBuilder(stock.get());
-    return new ResponseEntity<>(stockDTO, HttpStatus.OK);
+    return new ResponseEntity<>(new ApiResponse<>(stockDTO), HttpStatus.OK);
   }
 
   @GetMapping("/search")
-  public ResponseEntity<?>
+  public ResponseEntity<ApiResponse<List<StockDTO>>>
   searchStocks(@RequestParam(required = false) String name,
                @RequestParam(required = false) String sector) {
     List<StockDTO> stocks = stockService.searchStocks(name, sector);
     if (stocks.isEmpty()) {
       return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }
-    return new ResponseEntity<>(stocks, HttpStatus.OK);
+    return new ResponseEntity<>(new ApiResponse<>(stocks), HttpStatus.OK);
   }
 }

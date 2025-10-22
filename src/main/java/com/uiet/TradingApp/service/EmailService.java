@@ -3,7 +3,6 @@ package com.uiet.TradingApp.service;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -17,10 +16,11 @@ public class EmailService {
   private final JavaMailSender mailSender;
 
   @Value("${spring.mail.username}") private String from;
+  @Value("${verification.path}") private String verificationPath;
 
   public void sendVerificationEmail(String email, String verificationToken) {
     String subject = "Email Verification";
-    String path = "/public/verification";
+    String path = verificationPath;
     String message = "Click the button below to verify your email";
     sendEmail(email, subject, message, path, verificationToken);
   }

@@ -1,12 +1,12 @@
 package com.uiet.TradingApp.controller;
 
+import com.uiet.TradingApp.DTO.ApiResponse;
 import com.uiet.TradingApp.DTO.CompanyDTO;
 import com.uiet.TradingApp.entity.Company;
 import com.uiet.TradingApp.service.CompanyService;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -22,32 +22,37 @@ public class CompanyController {
   private final CompanyService companyService;
 
   @GetMapping("/all")
-  public ResponseEntity<?> getAllCompanies() {
+  public ResponseEntity<ApiResponse<List<CompanyDTO>>> getAllCompanies() {
     List<Company> companies = companyService.getAllCompanies();
     if (companies.isEmpty()) {
       return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     } else {
       List<CompanyDTO> companiesDTO =
           companies.stream().map(this::convertToDTO).toList();
-      return new ResponseEntity<>(companiesDTO, HttpStatus.OK);
+      return new ResponseEntity<>(new ApiResponse<>(companiesDTO),
+                                  HttpStatus.OK);
     }
   }
 
   @GetMapping("/id/{id}")
-  public ResponseEntity<?> getCompanyById(@PathVariable Long id) {
+  public ResponseEntity<ApiResponse<CompanyDTO>>
+  getCompanyById(@PathVariable Long id) {
     Optional<Company> company = companyService.findById(id);
     if (company.isPresent()) {
-      return new ResponseEntity<>(convertToDTO(company.get()), HttpStatus.OK);
+      return new ResponseEntity<>(
+          new ApiResponse<>(convertToDTO(company.get())), HttpStatus.OK);
     } else {
       return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }
   }
 
   @GetMapping("/name/{companyName}")
-  public ResponseEntity<?> findCompanyByName(@PathVariable String companyName) {
+  public ResponseEntity<ApiResponse<CompanyDTO>>
+  findCompanyByName(@PathVariable String companyName) {
     Optional<Company> company = companyService.getByName(companyName);
     if (company.isPresent()) {
-      return new ResponseEntity<>(convertToDTO(company.get()), HttpStatus.OK);
+      return new ResponseEntity<>(
+          new ApiResponse<>(convertToDTO(company.get())), HttpStatus.OK);
     } else {
       return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }

@@ -1,5 +1,6 @@
 package com.uiet.TradingApp.controller;
 
+import com.uiet.TradingApp.DTO.ApiResponse;
 import com.uiet.TradingApp.DTO.AuthRequest;
 import com.uiet.TradingApp.entity.User;
 import com.uiet.TradingApp.repository.UserRepository;
@@ -40,6 +41,7 @@ public class PublicController {
   private final JwtUtil jwtUtil;
   private final UserRepository userRepository;
   private final EmailService emailService;
+  private static final String ERROR_STRING = "ERROR: ";
 
   @GetMapping("/health-check")
   public String healthCheck() {
@@ -64,7 +66,8 @@ public class PublicController {
   }
 
   @PostMapping("/login")
-  public ResponseEntity<?> login(@RequestBody AuthRequest authRequest) {
+  public ResponseEntity<ApiResponse<Void>>
+  login(@RequestBody AuthRequest authRequest) {
     try {
       authenticationManager.authenticate(
           new UsernamePasswordAuthenticationToken(authRequest.getUsername(),
@@ -72,17 +75,18 @@ public class PublicController {
       UserDetails userDetails =
           userDetailsService.loadUserByUsername(authRequest.getUsername());
       String jwtToken = jwtUtil.generateToken(userDetails.getUsername());
-      return ResponseEntity.ok(jwtToken);
+      return ResponseEntity.ok(new ApiResponse<>(jwtToken));
 
     } catch (Exception e) {
       return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-          .body("Login failed: " + e.getMessage());
+          .body(new ApiResponse<>(ERROR_STRING +
+                                  "Login failed: " + e.getMessage()));
     }
   }
 
   @Async
   @PostMapping("/verify")
-  public CompletableFuture<ResponseEntity<?>>
+  public CompletableFuture<ResponseEntity<ApiResponse<Void>>>
   verifyEmail(@RequestBody AuthRequest authRequest) {
     return CompletableFuture.supplyAsync(() -> {
       try {
@@ -96,56 +100,62 @@ public class PublicController {
             userRepository.findByUserName(userDetails.getUsername());
         if (opUser.isEmpty()) {
           return ResponseEntity.status(HttpStatus.NOT_FOUND)
-              .body("User not found");
+              .body(new ApiResponse<>("User not found"));
         }
         User user = opUser.get();
         if (user.isVerified()) {
-          return ResponseEntity.ok("Email already verified");
+          return ResponseEntity.ok(new ApiResponse<>("Email already verified"));
         }
         String verificationToken =
             jwtUtil.generateEmailVerificationToken(user.getEmail());
         user.setVerificationToken(verificationToken);
         emailService.sendVerificationEmail(user.getEmail(), verificationToken);
         userService.saveUser(user);
-        return ResponseEntity.ok("Verification email sent!");
+        return ResponseEntity.ok(new ApiResponse<>("Verification email sent!"));
       } catch (Exception e) {
         log.error("Error in verifyEmail: ", e);
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-            .body("Verification failed: " + e.getMessage());
+            .body(new ApiResponse<>("Verification failed: " + e.getMessage()));
       }
     });
   }
 
   @Transactional
   @GetMapping("/verification")
-  public ResponseEntity<?>
+  public ResponseEntity<ApiResponse<Void>>
   verification(@RequestParam("token") String verificationToken) {
     try {
 
       String emailString = jwtUtil.extractUsername(verificationToken);
       Optional<User> opUser = userRepository.findByEmail(emailString);
-      if (opUser.isEmpty() || opUser.get().getVerificationToken() == null) {
-        return new ResponseEntity<>("No user found with this email",
-                                    HttpStatus.FORBIDDEN);
+      String verificationTokenInDb = opUser.get().getVerificationToken();
+      if (opUser.isEmpty() || verificationTokenInDb == null) {
+        return new ResponseEntity<>(
+            new ApiResponse<>("No user found with this email"),
+            HttpStatus.FORBIDDEN);
       }
       if (opUser.get().isVerified()) {
-        return new ResponseEntity<>("Email already verified",
+        return new ResponseEntity<>(new ApiResponse<>("Email already verified"),
                                     HttpStatus.FORBIDDEN);
       }
-      if (!jwtUtil.validateToken(verificationToken) ||
-          !opUser.get().getVerificationToken().equals(verificationToken)) {
+      boolean validateToken = jwtUtil.validateToken(verificationToken);
+      boolean equals = verificationTokenInDb.equals(verificationToken);
+      if (!validateToken || !equals) {
 
-        return new ResponseEntity<>("Token invalid or expired",
-                                    HttpStatus.FORBIDDEN);
+        return new ResponseEntity<>(
+            new ApiResponse<>("Token invalid or expired"),
+            HttpStatus.FORBIDDEN);
       }
       User user = opUser.get();
       user.setVerificationToken(null);
       user.setVerified(true);
       user.setRole(List.of("USER"));
-      return new ResponseEntity<>("Email verified successfully", HttpStatus.OK);
+      return new ResponseEntity<>(
+          new ApiResponse<>("Email verified successfully"), HttpStatus.OK);
     } catch (Exception e) {
       log.error("Error in verification {}", e);
-      return new ResponseEntity<>(e, HttpStatus.UNAUTHORIZED);
+      return new ResponseEntity<>(new ApiResponse<>(ERROR_STRING + e),
+                                  HttpStatus.UNAUTHORIZED);
     }
   }
 }

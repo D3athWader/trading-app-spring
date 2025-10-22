@@ -1,5 +1,6 @@
 package com.uiet.TradingApp.controller;
 
+import com.uiet.TradingApp.DTO.ApiResponse;
 import com.uiet.TradingApp.DTO.UserDTO;
 import com.uiet.TradingApp.entity.User;
 import com.uiet.TradingApp.repository.UserRepository;
@@ -11,7 +12,6 @@ import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -28,8 +28,8 @@ import org.springframework.web.bind.annotation.RestController;
 public class UserController {
 
   @GetMapping("/hello")
-  public String helloController() {
-    return new String("Hello Controller");
+  public ResponseEntity<ApiResponse<Void>> helloController() {
+    return new ResponseEntity<>(new ApiResponse<>("Hello"), HttpStatus.OK);
   }
 
   private final UserService userService;
@@ -38,7 +38,8 @@ public class UserController {
   private final TempService tempService;
 
   @GetMapping("/find-user/{userName}")
-  public ResponseEntity<?> findUser(@PathVariable String userName) {
+  public ResponseEntity<ApiResponse<UserDTO>>
+  findUser(@PathVariable String userName) {
     Optional<User> user = userRepository.findByUserName(userName);
     if (user.isEmpty()) {
       return new ResponseEntity<>(HttpStatus.NOT_FOUND);
@@ -46,12 +47,12 @@ public class UserController {
       User localUser = user.get();
       UserDTO sendUser =
           new UserDTO(localUser.getId(), userName, localUser.getCountry());
-      return new ResponseEntity<>(sendUser, HttpStatus.OK);
+      return new ResponseEntity<>(new ApiResponse<>(sendUser), HttpStatus.OK);
     }
   }
 
   @DeleteMapping("/delete")
-  public ResponseEntity<?>
+  public ResponseEntity<ApiResponse<Void>>
   deleteUser(@RequestHeader("Authorization") String authHeader) {
     try {
       String jwtToken = authHeader.substring(7);
@@ -59,23 +60,25 @@ public class UserController {
       userService.deleteUser(userName);
       return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     } catch (Exception e) {
-      return new ResponseEntity<>("Exception " + e, HttpStatus.FORBIDDEN);
+      return new ResponseEntity<>(new ApiResponse<>("Error: " + e),
+                                  HttpStatus.FORBIDDEN);
     }
   }
 
   @GetMapping("/all-users")
-  public ResponseEntity<?> getAllUsers() {
+  public ResponseEntity<ApiResponse<List<User>>> getAllUsers() {
     List<User> userList = userService.getAll();
     if (userList.isEmpty()) {
       return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     } else {
-      return new ResponseEntity<>(userList, HttpStatus.OK);
+      return new ResponseEntity<>(new ApiResponse<>(userList), HttpStatus.OK);
     }
   }
 
   @GetMapping("/add-balance")
-  public ResponseEntity<?> addBalance(@RequestHeader("Authorization")
-                                      String authHeader, BigDecimal balance) {
+  public ResponseEntity<ApiResponse<Void>>
+  addBalance(@RequestHeader("Authorization") String authHeader,
+             BigDecimal balance) {
     // Just using a placeholder for now
     try {
       String token = authHeader.substring(7);
@@ -84,25 +87,28 @@ public class UserController {
           () -> new RuntimeException("User not found"));
       userService.addBalance(user, balance);
       log.info("INFO: Adding balance {} for user {}", balance, userName);
-      return new ResponseEntity<>("Balance added", HttpStatus.CREATED);
+      return new ResponseEntity<>(new ApiResponse<>("Balance added"),
+                                  HttpStatus.CREATED);
     } catch (Exception e) {
       log.error("ERROR: Failed to add balance for user");
-      return new ResponseEntity<>("Exception " + e, HttpStatus.FORBIDDEN);
+      return new ResponseEntity<>(new ApiResponse<>("Exception " + e),
+                                  HttpStatus.FORBIDDEN);
     }
   }
 
   @GetMapping("/logout")
-  public ResponseEntity<?>
+  public ResponseEntity<ApiResponse<Void>>
   logout(@RequestHeader("Authorization") String authHeader) {
     try {
       String token = authHeader.substring(7);
       tempService.newEntry(token);
       log.info("logged out {}", token);
-      return ResponseEntity.status(HttpStatus.OK).body("Logout successful");
+      return ResponseEntity.status(HttpStatus.OK)
+          .body(new ApiResponse<>("Logout successful"));
     } catch (Exception e) {
       log.error("Error in logout {}", e);
       return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-          .body("Error in logout");
+          .body(new ApiResponse<>("Error in logout"));
     }
   }
 }

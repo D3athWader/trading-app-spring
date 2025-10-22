@@ -12,7 +12,6 @@ import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -40,7 +39,8 @@ public class StockService {
       stock.setLowPrice(soldPrice);
     }
     log.info("INFO: Updating stock price for symbol {}", stock.getSymbol());
-    saveEntry(stock);
+    stock.setLastUpdated(LocalDateTime.now());
+    stockRepository.save(stock);
   }
 
   @Transactional
@@ -48,7 +48,8 @@ public class StockService {
     stock.setTradedVolume(stock.getTradedVolume() + quantity);
     log.info("INFO: Updating stock traded volume for symbol {}",
              stock.getSymbol());
-    saveEntry(stock);
+    stock.setLastUpdated(LocalDateTime.now());
+    stockRepository.save(stock);
   }
 
   @Transactional
@@ -69,7 +70,8 @@ public class StockService {
     stock.setTotalStocks(newQuantity);
     log.info("INFO: Updating stock total stocks for symbol {}",
              stock.getSymbol());
-    saveEntry(stock);
+    stock.setLastUpdated(LocalDateTime.now());
+    stockRepository.save(stock);
   }
 
   public List<Portfolio> getPortfolios(Stock stock) {
@@ -123,31 +125,31 @@ public class StockService {
 
   public Stock buildStock(NewStock newStock, Company company) {
     BigDecimal openPrice = newStock.getOpenPrice();
-    Stock stock = Stock.builder()
-                      .symbol(newStock.getSymbol())
-                      .currentPrice(openPrice)
-                      .openPrice(openPrice)
-                      .highPrice(openPrice)
-                      .lowPrice(openPrice)
-                      .totalStocks(newStock.getTotalStocks())
-                      .tradedVolume(0L)
-                      .company(company)
-                      .portfolio(null)
-                      .build();
-    return stock;
+    return Stock.builder()
+        .symbol(newStock.getSymbol())
+        .currentPrice(openPrice)
+        .openPrice(openPrice)
+        .highPrice(openPrice)
+        .lowPrice(openPrice)
+        .totalStocks(newStock.getTotalStocks())
+        .tradedVolume(0L)
+        .company(company)
+        .portfolio(null)
+        .build();
   }
 
   @Transactional
   public Stock createStockAndUpdate(NewStock newStock) {
-    Long company_id = newStock.getCompany_id();
-    Optional<Company> opCompany = companyService.findById(company_id);
+    Long companyId = newStock.getCompany_id();
+    Optional<Company> opCompany = companyService.findById(companyId);
     if (opCompany.isEmpty()) {
-      log.error("ERROR: Company not found {} ", company_id);
+      log.error("ERROR: Company not found {} ", companyId);
       throw new RuntimeException("Company not found");
     }
     Company company = opCompany.get();
     Stock stock = buildStock(newStock, company);
-    newStock(stock);
+    stock.setLastUpdated(LocalDateTime.now());
+    stockRepository.save(stock);
     log.info("INFO: Stock created successfully {}", newStock.getSymbol());
     companyService.saveEntry(company);
     log.info("INFO: Company updated successfully {}", company.getName());
