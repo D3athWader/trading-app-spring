@@ -10,7 +10,6 @@ import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
@@ -18,7 +17,6 @@ import org.springframework.transaction.annotation.Transactional;
 public class CompanyService {
 
   @Autowired CompanyRepository companyRepository;
-  @Autowired StockService stockService;
 
   public List<Company> getAllCompanies() { return companyRepository.findAll(); }
 
@@ -45,7 +43,11 @@ public class CompanyService {
     companyRepository.save(company);
   }
 
-  public void saveEntry(Company company) { companyRepository.save(company); }
+  @Transactional
+  public void saveEntry(Company company) {
+    company.setMarketCap(calculateMarketCap(company));
+    companyRepository.save(company);
+  }
 
   @Transactional
   public void deleteEntry(Company company) {
@@ -58,14 +60,10 @@ public class CompanyService {
   }
 
   private BigDecimal calculateMarketCap(Company company) {
-
     BigDecimal result = BigDecimal.ZERO;
-    List<Stock> stocks = company.getStocks();
-    for (Stock stock : stocks) {
-      result = result.add(stock.getCurrentPrice().multiply(
-          BigDecimal.valueOf(stock.getTradedVolume())));
+    for (Stock stock : company.getStocks()) {
+      result = result.add(stock.getTotalPrice());
     }
-    company.setMarketCap(result);
     return result;
   }
 }

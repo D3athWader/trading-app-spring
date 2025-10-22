@@ -1,0 +1,658 @@
+openapi: 3.0.1
+info:
+  title: OpenAPI definition
+  version: v0
+servers:
+- url: http://localhost:8080
+  description: Generated server url
+paths:
+  /public/verify:
+    post:
+      tags:
+      - public-controller
+      operationId: verifyEmail
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuthRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: object
+  /public/signup:
+    post:
+      tags:
+      - public-controller
+      operationId: createUser
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/User"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: object
+  /public/login:
+    post:
+      tags:
+      - public-controller
+      operationId: login
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuthRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: object
+  /order/sell-order:
+    post:
+      tags:
+      - order-controller
+      operationId: sellOrder
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Order"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: object
+  /order/buy-order:
+    post:
+      tags:
+      - order-controller
+      operationId: buyOrder
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Order"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: object
+  /admin/stock/new-stock:
+    post:
+      tags:
+      - admin-stock-controller
+      operationId: newStock
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NewStock"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: object
+  /admin/company/create-company:
+    post:
+      tags:
+      - admin-company-controller
+      operationId: createCompany
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Company"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: object
+  /user-panel/logout:
+    get:
+      tags:
+      - user-controller
+      operationId: logout
+      parameters:
+      - name: Authorization
+        in: header
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: object
+  /user-panel/hello:
+    get:
+      tags:
+      - user-controller
+      operationId: helloController
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: string
+  /user-panel/find-user/{userName}:
+    get:
+      tags:
+      - user-controller
+      operationId: findUser
+      parameters:
+      - name: userName
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: object
+  /user-panel/all-users:
+    get:
+      tags:
+      - user-controller
+      operationId: getAllUsers
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: object
+  /user-panel/add-balance:
+    get:
+      tags:
+      - user-controller
+      operationId: addBalance
+      parameters:
+      - name: Authorization
+        in: header
+        required: true
+        schema:
+          type: string
+      - name: balance
+        in: query
+        required: true
+        schema:
+          type: number
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: object
+  /stock/{id}:
+    get:
+      tags:
+      - stock-controller
+      operationId: getStockById
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: object
+  /stock/search:
+    get:
+      tags:
+      - stock-controller
+      operationId: searchStocks
+      parameters:
+      - name: name
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: sector
+        in: query
+        required: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: object
+  /public/verification:
+    get:
+      tags:
+      - public-controller
+      operationId: verification
+      parameters:
+      - name: token
+        in: query
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: object
+  /public/health-check:
+    get:
+      tags:
+      - public-controller
+      operationId: healthCheck
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: string
+  /order/userName/{userName}:
+    get:
+      tags:
+      - order-controller
+      operationId: findOrdersByUserName
+      parameters:
+      - name: userName
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: object
+  /order/userId/{userId}:
+    get:
+      tags:
+      - order-controller
+      operationId: findOrdersByUserId
+      parameters:
+      - name: userId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: object
+  /order/all:
+    get:
+      tags:
+      - order-controller
+      operationId: getAllOrders
+      parameters:
+      - name: Authorization
+        in: header
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: object
+  /company/name/{companyName}:
+    get:
+      tags:
+      - company-controller
+      operationId: findCompanyByName
+      parameters:
+      - name: companyName
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: object
+  /company/id/{id}:
+    get:
+      tags:
+      - company-controller
+      operationId: getCompanyById
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: object
+  /company/all:
+    get:
+      tags:
+      - company-controller
+      operationId: getAllCompanies
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: object
+  /admin/make-admin/{username}:
+    get:
+      tags:
+      - admin-user-controller
+      operationId: makeUserAdmin
+      parameters:
+      - name: username
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: object
+  /admin/check:
+    get:
+      tags:
+      - admin-user-controller
+      operationId: checkAdmin
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: object
+  /user-panel/delete:
+    delete:
+      tags:
+      - user-controller
+      operationId: deleteUser
+      parameters:
+      - name: Authorization
+        in: header
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: object
+  /order/cancel-order/{orderId}:
+    delete:
+      tags:
+      - order-controller
+      operationId: cancelOrder
+      parameters:
+      - name: orderId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: object
+  /admin/stock/delete-stock/{id}:
+    delete:
+      tags:
+      - admin-stock-controller
+      operationId: deleteStock
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: object
+  /admin/company/delete/{id}:
+    delete:
+      tags:
+      - admin-company-controller
+      operationId: deleteCompany
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: object
+components:
+  schemas:
+    AuthRequest:
+      type: object
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        userName:
+          type: string
+        password:
+          type: string
+        email:
+          type: string
+        role:
+          type: array
+          items:
+            type: string
+        createadAt:
+          type: string
+          format: date-time
+        lastActive:
+          type: string
+          format: date-time
+        balance:
+          type: number
+        country:
+          type: string
+        status:
+          type: string
+        verificationToken:
+          type: string
+        resetToken:
+          type: string
+        verified:
+          type: boolean
+    Company:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        tickerSymbol:
+          type: string
+        sector:
+          type: string
+        marketCap:
+          type: number
+        createdAt:
+          type: string
+          format: date-time
+        stocks:
+          type: array
+          items:
+            $ref: "#/components/schemas/Stock"
+    Order:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        user:
+          $ref: "#/components/schemas/User"
+        stock:
+          $ref: "#/components/schemas/Stock"
+        quantity:
+          type: integer
+          format: int64
+        price:
+          type: number
+        type:
+          type: string
+          enum:
+          - BUY
+          - SELL
+        status:
+          type: string
+          enum:
+          - PENDING
+          - PARTIALLY_FILLED
+          - FILLED
+          - CANCELLED
+        timestamp:
+          type: string
+          format: date-time
+        remainingQuantity:
+          type: integer
+          format: int64
+    Portfolio:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        quantity:
+          type: integer
+          format: int64
+        averagePricePaid:
+          type: number
+        user:
+          $ref: "#/components/schemas/User"
+        stock:
+          $ref: "#/components/schemas/Stock"
+    Stock:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        totalPrice:
+          type: number
+        symbol:
+          type: string
+        currentPrice:
+          type: number
+        openPrice:
+          type: number
+        closePrice:
+          type: number
+        highPrice:
+          type: number
+        lowPrice:
+          type: number
+        tradedVolume:
+          type: integer
+          format: int64
+        totalStocks:
+          type: integer
+          format: int64
+        lastUpdated:
+          type: string
+          format: date-time
+        company:
+          $ref: "#/components/schemas/Company"
+        portfolio:
+          type: array
+          items:
+            $ref: "#/components/schemas/Portfolio"
+    NewStock:
+      type: object
+      properties:
+        symbol:
+          type: string
+        openPrice:
+          type: number
+        totalStocks:
+          type: integer
+          format: int64
+        company_id:
+          type: integer
+          format: int64

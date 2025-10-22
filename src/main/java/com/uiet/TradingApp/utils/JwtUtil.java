@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class JwtUtil {
-  @Value("${jwt.secret}") private String SECRET_KEY;
+  @Value("${jwt.secret}") private String secretKey;
 
   public String generateToken(String userName) {
     Map<String, Object> claims = new HashMap<>();
@@ -55,7 +55,7 @@ public class JwtUtil {
 
   private SecretKey getSigningKey() {
 
-    return Keys.hmacShaKeyFor(SECRET_KEY.getBytes());
+    return Keys.hmacShaKeyFor(secretKey.getBytes());
   }
 
   public String extractUsername(String token) {

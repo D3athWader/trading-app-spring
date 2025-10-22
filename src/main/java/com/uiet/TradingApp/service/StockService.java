@@ -1,6 +1,8 @@
 package com.uiet.TradingApp.service;
 
+import com.uiet.TradingApp.DTO.NewStock;
 import com.uiet.TradingApp.DTO.StockDTO;
+import com.uiet.TradingApp.entity.Company;
 import com.uiet.TradingApp.entity.Portfolio;
 import com.uiet.TradingApp.entity.Stock;
 import com.uiet.TradingApp.repository.StockRepository;
@@ -11,13 +13,13 @@ import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
 public class StockService {
   @Autowired StockRepository stockRepository;
+  @Autowired CompanyService companyService;
 
   public Optional<Stock> getStockBySymbol(String symbol) {
     log.info("INFO: Getting stock by symbol {}", symbol);
@@ -56,9 +58,6 @@ public class StockService {
 
   @Transactional
   public void newStock(Stock stock) {
-    stock.setOpenPrice(stock.getCurrentPrice());
-    stock.setTradedVolume(0L);
-    stock.setClosePrice(BigDecimal.valueOf(0.0));
     log.info("INFO: Creating new stock entry for symbol {}", stock.getSymbol());
     stockRepository.save(stock);
   }
@@ -113,5 +112,43 @@ public class StockService {
       stocks = stockRepository.findAll();
     }
     return stocks.stream().map(this::dtoBuilder).toList();
+  }
+
+  @Transactional
+  public void deleteStock(Long id) {
+    stockRepository.deleteById(id);
+  }
+
+  public Stock buildStock(NewStock newStock, Company company) {
+    BigDecimal openPrice = newStock.getOpenPrice();
+    Stock stock = Stock.builder()
+                      .symbol(newStock.getSymbol())
+                      .currentPrice(openPrice)
+                      .openPrice(openPrice)
+                      .highPrice(openPrice)
+                      .lowPrice(openPrice)
+                      .totalStocks(newStock.getTotalStocks())
+                      .tradedVolume(0L)
+                      .company(company)
+                      .portfolio(null)
+                      .build();
+    return stock;
+  }
+
+  @Transactional
+  public Stock createStockAndUpdate(NewStock newStock) {
+    Long company_id = newStock.getCompany_id();
+    Optional<Company> opCompany = companyService.findById(company_id);
+    if (opCompany.isEmpty()) {
+      log.error("ERROR: Company not found {} ", company_id);
+      throw new RuntimeException("Company not found");
+    }
+    Company company = opCompany.get();
+    Stock stock = buildStock(newStock, company);
+    newStock(stock);
+    log.info("INFO: Stock created successfully {}", newStock.getSymbol());
+    companyService.saveEntry(company);
+    log.info("INFO: Company updated successfully {}", company.getName());
+    return stock;
   }
 }

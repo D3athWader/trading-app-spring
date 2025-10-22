@@ -30,12 +30,18 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/public")
 @Slf4j
 public class PublicController {
-  @Autowired private UserService userService;
-  @Autowired private AuthenticationManager authenticationManager;
-  @Autowired private UserDetailsService userDetailsService;
-  @Autowired private JwtUtil jwtUtil;
-  @Autowired private UserRepository userRepository;
-  @Autowired private EmailService emailService;
+  @Autowired
+  private UserService userService;
+  @Autowired
+  private AuthenticationManager authenticationManager;
+  @Autowired
+  private UserDetailsService userDetailsService;
+  @Autowired
+  private JwtUtil jwtUtil;
+  @Autowired
+  private UserRepository userRepository;
+  @Autowired
+  private EmailService emailService;
 
   @GetMapping("/health-check")
   public String healthCheck() {
@@ -63,10 +69,9 @@ public class PublicController {
   public ResponseEntity<?> login(@RequestBody AuthRequest authRequest) {
     try {
       authenticationManager.authenticate(
-          new UsernamePasswordAuthenticationToken(authRequest.getUserName(),
-                                                  authRequest.getPassword()));
-      UserDetails userDetails =
-          userDetailsService.loadUserByUsername(authRequest.getUserName());
+          new UsernamePasswordAuthenticationToken(authRequest.getUsername(),
+              authRequest.getPassword()));
+      UserDetails userDetails = userDetailsService.loadUserByUsername(authRequest.getUsername());
       String jwtToken = jwtUtil.generateToken(userDetails.getUsername());
       return ResponseEntity.ok(jwtToken);
 
@@ -81,17 +86,14 @@ public class PublicController {
   public ResponseEntity<?> verifyEmail(@RequestBody AuthRequest authRequest) {
     try {
       authenticationManager.authenticate(
-          new UsernamePasswordAuthenticationToken(authRequest.getUserName(),
-                                                  authRequest.getPassword()));
-      UserDetails userDetails =
-          userDetailsService.loadUserByUsername(authRequest.getUserName());
-      User user =
-          userRepository.findByUserName(userDetails.getUsername()).get();
+          new UsernamePasswordAuthenticationToken(authRequest.getUsername(),
+              authRequest.getPassword()));
+      UserDetails userDetails = userDetailsService.loadUserByUsername(authRequest.getUsername());
+      User user = userRepository.findByUserName(userDetails.getUsername()).get();
       if (user.isVerified()) {
         return new ResponseEntity<>("Email already verified", HttpStatus.OK);
       }
-      String verificationToken =
-          jwtUtil.generateEmailVerificationToken(user.getEmail());
+      String verificationToken = jwtUtil.generateEmailVerificationToken(user.getEmail());
       user.setVerificationToken(verificationToken);
       emailService.sendVerificationEmail(user.getEmail(), verificationToken);
       userService.saveUser(user);
@@ -105,25 +107,24 @@ public class PublicController {
 
   @Transactional
   @GetMapping("/verification")
-  public ResponseEntity<?>
-  verification(@RequestParam("token") String verificationToken) {
+  public ResponseEntity<?> verification(@RequestParam("token") String verificationToken) {
     try {
 
       String emailString = jwtUtil.extractUsername(verificationToken);
       Optional<User> opUser = userRepository.findByEmail(emailString);
       if (opUser.isEmpty() || opUser.get().getVerificationToken() == null) {
         return new ResponseEntity<>("No user found with this email",
-                                    HttpStatus.FORBIDDEN);
+            HttpStatus.FORBIDDEN);
       }
       if (opUser.get().isVerified()) {
         return new ResponseEntity<>("Email already verified",
-                                    HttpStatus.FORBIDDEN);
+            HttpStatus.FORBIDDEN);
       }
       if (!jwtUtil.validateToken(verificationToken) ||
           !opUser.get().getVerificationToken().equals(verificationToken)) {
 
         return new ResponseEntity<>("Token invalid or expired",
-                                    HttpStatus.FORBIDDEN);
+            HttpStatus.FORBIDDEN);
       }
       User user = opUser.get();
       user.setVerificationToken(null);

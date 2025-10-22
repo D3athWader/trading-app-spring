@@ -3,6 +3,7 @@ package com.uiet.TradingApp.AdminController;
 import com.uiet.TradingApp.entity.Company;
 import com.uiet.TradingApp.service.CompanyService;
 import java.util.Optional;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -14,7 +15,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("company")
+@RequestMapping("admin/company")
+@Slf4j
 public class AdminCompanyController {
 
   @Autowired CompanyService companyService;
@@ -22,6 +24,7 @@ public class AdminCompanyController {
   @PostMapping("/create-company")
   public ResponseEntity<?> createCompany(@RequestBody Company company) {
     companyService.newEntry(company);
+    log.info("INFO: Company created successfully {}", company.getName());
     return new ResponseEntity<>(company, HttpStatus.CREATED);
   }
 
@@ -29,9 +32,12 @@ public class AdminCompanyController {
   public ResponseEntity<?> deleteCompany(@PathVariable Long id) {
     Optional<Company> company = companyService.findById(id);
     if (!company.isPresent()) {
+      log.warn("Company with id {} not found", id);
       return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     } else {
       companyService.deleteEntry(company.get());
+      log.info("INFO: Company deleted successfully {}",
+               company.get().getName());
       return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
   }
