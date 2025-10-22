@@ -54,7 +54,7 @@ public class OrderMatchingService {
       }
       i++;
     }
-    if (fulfilledStocks == neededStocks) {
+    if (fulfilledStocks.equals(neededStocks)) {
       buyOrder.setStatus(OrderStatus.FILLED);
       log.info("INFO: FULLY FILLED Buy Order {}", buyOrder.getId());
     } else if (fulfilledStocks > 0L && fulfilledStocks < neededStocks) {
@@ -101,7 +101,7 @@ public class OrderMatchingService {
       }
       i++;
     }
-    if (soldStocks == sellingStocks) {
+    if (soldStocks.equals(sellingStocks)) {
       sellOrder.setStatus(OrderStatus.FILLED);
       log.info("INFO: FULLY FILLED Sell Order {}", sellOrder.getId());
     } else if (soldStocks > 0L && soldStocks < sellingStocks) {
