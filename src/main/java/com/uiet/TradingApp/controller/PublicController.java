@@ -71,7 +71,6 @@ public class PublicController {
       return ResponseEntity.ok(jwtToken);
 
     } catch (Exception e) {
-      e.printStackTrace();
       return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
           .body("Login failed: " + e.getMessage());
     }
