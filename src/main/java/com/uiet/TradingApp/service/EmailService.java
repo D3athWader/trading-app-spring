@@ -1,6 +1,7 @@
 package com.uiet.TradingApp.service;
 
 import jakarta.mail.internet.MimeMessage;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -11,12 +12,11 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class EmailService {
-  @Autowired
-  JavaMailSender mailSender;
+  private final JavaMailSender mailSender;
 
-  @Value("${spring.mail.username}")
-  private String from;
+  @Value("${spring.mail.username}") private String from;
 
   public void sendVerificationEmail(String email, String verificationToken) {
     String subject = "Email Verification";
@@ -26,14 +26,13 @@ public class EmailService {
   }
 
   public void sendEmail(String email, String subject, String message,
-      String path, String verificationToken) {
+                        String path, String verificationToken) {
     try {
       String actionUrl = ServletUriComponentsBuilder.fromCurrentContextPath()
-          .path(path)
-          .queryParam("token", verificationToken)
-          .toUriString();
-      String content = String.format(
-          """
+                             .path(path)
+                             .queryParam("token", verificationToken)
+                             .toUriString();
+      String content = String.format("""
               <div style="font-family: Arial, sans-serif; max-width: 600px; background-color: #f2f2f2; padding: 20px; border-radius: 5px;">
                 <h2 style="color: #333;">%s</h2>
                 <p style="color: #666;">%s</p>
@@ -42,10 +41,10 @@ public class EmailService {
                    Verify Email
                 </a>
               </div>
-              """,
-          subject, message, actionUrl);
+              """, subject, message, actionUrl);
       MimeMessage mimeMessage = mailSender.createMimeMessage();
-      MimeMessageHelper mimeMessageHelper = new MimeMessageHelper(mimeMessage, true);
+      MimeMessageHelper mimeMessageHelper =
+          new MimeMessageHelper(mimeMessage, true);
       mimeMessageHelper.setTo(email);
       mimeMessageHelper.setSubject(subject);
       mimeMessageHelper.setText(content, true);

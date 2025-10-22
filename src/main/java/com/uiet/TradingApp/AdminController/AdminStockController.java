@@ -3,6 +3,7 @@ package com.uiet.TradingApp.AdminController;
 import com.uiet.TradingApp.DTO.NewStock;
 import com.uiet.TradingApp.entity.Stock;
 import com.uiet.TradingApp.service.StockService;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -17,8 +18,10 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @Slf4j
 @RequestMapping("/admin/stock")
+
+@RequiredArgsConstructor
 public class AdminStockController {
-  @Autowired private StockService stockService;
+  private final StockService stockService;
 
   @PostMapping("/new-stock")
   public ResponseEntity<?> newStock(@RequestBody NewStock newStock) {

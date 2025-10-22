@@ -4,6 +4,7 @@ import com.uiet.TradingApp.entity.Enum.OrderStatus;
 import com.uiet.TradingApp.entity.Enum.OrderType;
 import com.uiet.TradingApp.entity.Order;
 import java.util.List;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -12,9 +13,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class OrderMatchingService {
-  @Autowired private OrderService orderService;
-  @Autowired private TradeService tradeService;
+  private final OrderService orderService;
+  private final TradeService tradeService;
 
   @Transactional
   public void buyOrderMatcher(Order buyOrder) {

@@ -23,7 +23,7 @@ paths:
           content:
             '*/*':
               schema:
-                type: object
+                type: string
   /public/signup:
     post:
       tags:

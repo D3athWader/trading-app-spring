@@ -7,6 +7,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -21,10 +22,11 @@ import org.springframework.web.filter.OncePerRequestFilter;
 @Component
 @Slf4j
 
+@RequiredArgsConstructor
 public class JwtFilter extends OncePerRequestFilter {
-  @Autowired private UserDetailsService userDetailsService;
-  @Autowired private JwtUtil jwtUtil;
-  @Autowired private TempService tempService;
+  private final UserDetailsService userDetailsService;
+  private final JwtUtil jwtUtil;
+  private final TempService tempService;
 
   @Override
   protected void doFilterInternal(HttpServletRequest request,

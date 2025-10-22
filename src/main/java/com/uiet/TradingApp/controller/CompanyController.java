@@ -5,6 +5,7 @@ import com.uiet.TradingApp.entity.Company;
 import com.uiet.TradingApp.service.CompanyService;
 import java.util.List;
 import java.util.Optional;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -15,10 +16,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/company")
+@RequiredArgsConstructor
 public class CompanyController {
 
-  @Autowired
-  CompanyService companyService;
+  private final CompanyService companyService;
 
   @GetMapping("/all")
   public ResponseEntity<?> getAllCompanies() {
@@ -26,7 +27,8 @@ public class CompanyController {
     if (companies.isEmpty()) {
       return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     } else {
-      List<CompanyDTO> companiesDTO = companies.stream().map(this::convertToDTO).toList();
+      List<CompanyDTO> companiesDTO =
+          companies.stream().map(this::convertToDTO).toList();
       return new ResponseEntity<>(companiesDTO, HttpStatus.OK);
     }
   }

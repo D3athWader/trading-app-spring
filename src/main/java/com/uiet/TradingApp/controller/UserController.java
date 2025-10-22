@@ -9,6 +9,7 @@ import com.uiet.TradingApp.utils.JwtUtil;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -23,6 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @Slf4j
 @RequestMapping("user-panel")
+@RequiredArgsConstructor
 public class UserController {
 
   @GetMapping("/hello")
@@ -30,14 +32,10 @@ public class UserController {
     return new String("Hello Controller");
   }
 
-  @Autowired
-  private UserService userService;
-  @Autowired
-  private UserRepository userRepository;
-  @Autowired
-  private JwtUtil jwtUtil;
-  @Autowired
-  private TempService tempService;
+  private final UserService userService;
+  private final UserRepository userRepository;
+  private final JwtUtil jwtUtil;
+  private final TempService tempService;
 
   @GetMapping("/find-user/{userName}")
   public ResponseEntity<?> findUser(@PathVariable String userName) {
@@ -46,13 +44,15 @@ public class UserController {
       return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     } else {
       User localUser = user.get();
-      UserDTO sendUser = new UserDTO(localUser.getId(), userName, localUser.getCountry());
+      UserDTO sendUser =
+          new UserDTO(localUser.getId(), userName, localUser.getCountry());
       return new ResponseEntity<>(sendUser, HttpStatus.OK);
     }
   }
 
   @DeleteMapping("/delete")
-  public ResponseEntity<?> deleteUser(@RequestHeader("Authorization") String authHeader) {
+  public ResponseEntity<?>
+  deleteUser(@RequestHeader("Authorization") String authHeader) {
     try {
       String jwtToken = authHeader.substring(7);
       String userName = jwtUtil.extractUsername(jwtToken);
@@ -74,7 +74,8 @@ public class UserController {
   }
 
   @GetMapping("/add-balance")
-  public ResponseEntity<?> addBalance(@RequestHeader("Authorization") String authHeader, BigDecimal balance) {
+  public ResponseEntity<?> addBalance(@RequestHeader("Authorization")
+                                      String authHeader, BigDecimal balance) {
     // Just using a placeholder for now
     try {
       String token = authHeader.substring(7);
@@ -91,7 +92,8 @@ public class UserController {
   }
 
   @GetMapping("/logout")
-  public ResponseEntity<?> logout(@RequestHeader("Authorization") String authHeader) {
+  public ResponseEntity<?>
+  logout(@RequestHeader("Authorization") String authHeader) {
     try {
       String token = authHeader.substring(7);
       tempService.newEntry(token);

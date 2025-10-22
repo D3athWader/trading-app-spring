@@ -6,6 +6,7 @@ import com.uiet.TradingApp.repository.StockRepository;
 import com.uiet.TradingApp.service.StockService;
 import java.util.List;
 import java.util.Optional;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,11 +21,10 @@ import org.springframework.web.bind.annotation.RestController;
 // number of stocks
 @RestController
 @RequestMapping("/stock")
+@RequiredArgsConstructor
 public class StockController {
-  @Autowired
-  private StockService stockService;
-  @Autowired
-  private StockRepository stockRepository;
+  private final StockService stockService;
+  private final StockRepository stockRepository;
 
   @GetMapping("/{id}")
   public ResponseEntity<?> getStockById(@PathVariable Long id) {
@@ -37,8 +37,9 @@ public class StockController {
   }
 
   @GetMapping("/search")
-  public ResponseEntity<?> searchStocks(@RequestParam(required = false) String name,
-      @RequestParam(required = false) String sector) {
+  public ResponseEntity<?>
+  searchStocks(@RequestParam(required = false) String name,
+               @RequestParam(required = false) String sector) {
     List<StockDTO> stocks = stockService.searchStocks(name, sector);
     if (stocks.isEmpty()) {
       return new ResponseEntity<>(HttpStatus.NOT_FOUND);

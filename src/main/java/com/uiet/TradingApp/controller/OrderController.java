@@ -6,6 +6,7 @@ import com.uiet.TradingApp.service.OrderService;
 import com.uiet.TradingApp.utils.JwtUtil;
 import java.util.List;
 import java.util.Optional;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,14 +21,12 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/order")
+@RequiredArgsConstructor
 public class OrderController {
   // TODO: add from time search
-  @Autowired
-  private OrderService orderService;
-  @Autowired
-  private OrderRepository orderRepository;
-  @Autowired
-  private JwtUtil jwtUtil;
+  private final OrderService orderService;
+  private final OrderRepository orderRepository;
+  private final JwtUtil jwtUtil;
 
   @PostMapping("/buy-order")
   public ResponseEntity<?> buyOrder(@RequestBody Order order) {
@@ -94,7 +93,8 @@ public class OrderController {
   }
 
   @GetMapping("/all")
-  public ResponseEntity<?> getAllOrders(@RequestHeader("Authorization") String authHeader) {
+  public ResponseEntity<?>
+  getAllOrders(@RequestHeader("Authorization") String authHeader) {
     try {
       String username = jwtUtil.extractUsername(authHeader);
       return ResponseEntity.ok(orderRepository.findByUser_UserName(username));

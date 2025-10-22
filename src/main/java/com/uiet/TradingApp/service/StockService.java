@@ -10,6 +10,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -17,9 +18,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class StockService {
-  @Autowired StockRepository stockRepository;
-  @Autowired CompanyService companyService;
+  private final StockRepository stockRepository;
+  private final CompanyService companyService;
 
   public Optional<Stock> getStockBySymbol(String symbol) {
     log.info("INFO: Getting stock by symbol {}", symbol);

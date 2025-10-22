@@ -8,6 +8,9 @@ import com.uiet.TradingApp.service.UserService;
 import com.uiet.TradingApp.utils.JwtUtil;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Future;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -29,19 +32,14 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/public")
 @Slf4j
+@RequiredArgsConstructor
 public class PublicController {
-  @Autowired
-  private UserService userService;
-  @Autowired
-  private AuthenticationManager authenticationManager;
-  @Autowired
-  private UserDetailsService userDetailsService;
-  @Autowired
-  private JwtUtil jwtUtil;
-  @Autowired
-  private UserRepository userRepository;
-  @Autowired
-  private EmailService emailService;
+  private final UserService userService;
+  private final AuthenticationManager authenticationManager;
+  private final UserDetailsService userDetailsService;
+  private final JwtUtil jwtUtil;
+  private final UserRepository userRepository;
+  private final EmailService emailService;
 
   @GetMapping("/health-check")
   public String healthCheck() {
@@ -70,8 +68,9 @@ public class PublicController {
     try {
       authenticationManager.authenticate(
           new UsernamePasswordAuthenticationToken(authRequest.getUsername(),
-              authRequest.getPassword()));
-      UserDetails userDetails = userDetailsService.loadUserByUsername(authRequest.getUsername());
+                                                  authRequest.getPassword()));
+      UserDetails userDetails =
+          userDetailsService.loadUserByUsername(authRequest.getUsername());
       String jwtToken = jwtUtil.generateToken(userDetails.getUsername());
       return ResponseEntity.ok(jwtToken);
 
@@ -83,48 +82,61 @@ public class PublicController {
 
   @Async
   @PostMapping("/verify")
-  public ResponseEntity<?> verifyEmail(@RequestBody AuthRequest authRequest) {
-    try {
-      authenticationManager.authenticate(
-          new UsernamePasswordAuthenticationToken(authRequest.getUsername(),
-              authRequest.getPassword()));
-      UserDetails userDetails = userDetailsService.loadUserByUsername(authRequest.getUsername());
-      User user = userRepository.findByUserName(userDetails.getUsername()).get();
-      if (user.isVerified()) {
-        return new ResponseEntity<>("Email already verified", HttpStatus.OK);
+  public CompletableFuture<ResponseEntity<?>>
+  verifyEmail(@RequestBody AuthRequest authRequest) {
+    return CompletableFuture.supplyAsync(() -> {
+      try {
+        authenticationManager.authenticate(
+            new UsernamePasswordAuthenticationToken(authRequest.getUsername(),
+                                                    authRequest.getPassword()));
+
+        UserDetails userDetails =
+            userDetailsService.loadUserByUsername(authRequest.getUsername());
+        Optional<User> opUser =
+            userRepository.findByUserName(userDetails.getUsername());
+        if (opUser.isEmpty()) {
+          return ResponseEntity.status(HttpStatus.NOT_FOUND)
+              .body("User not found");
+        }
+        User user = opUser.get();
+        if (user.isVerified()) {
+          return ResponseEntity.ok("Email already verified");
+        }
+        String verificationToken =
+            jwtUtil.generateEmailVerificationToken(user.getEmail());
+        user.setVerificationToken(verificationToken);
+        emailService.sendVerificationEmail(user.getEmail(), verificationToken);
+        userService.saveUser(user);
+        return ResponseEntity.ok("Verification email sent!");
+      } catch (Exception e) {
+        log.error("Error in verifyEmail: ", e);
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            .body("Verification failed: " + e.getMessage());
       }
-      String verificationToken = jwtUtil.generateEmailVerificationToken(user.getEmail());
-      user.setVerificationToken(verificationToken);
-      emailService.sendVerificationEmail(user.getEmail(), verificationToken);
-      userService.saveUser(user);
-      return new ResponseEntity<>("Verification email sent!", HttpStatus.OK);
-    } catch (Exception e) {
-      log.error("Error in verify {}", e);
-      return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-          .body("verification failed: " + e.getMessage());
-    }
+    });
   }
 
   @Transactional
   @GetMapping("/verification")
-  public ResponseEntity<?> verification(@RequestParam("token") String verificationToken) {
+  public ResponseEntity<?>
+  verification(@RequestParam("token") String verificationToken) {
     try {
 
       String emailString = jwtUtil.extractUsername(verificationToken);
       Optional<User> opUser = userRepository.findByEmail(emailString);
       if (opUser.isEmpty() || opUser.get().getVerificationToken() == null) {
         return new ResponseEntity<>("No user found with this email",
-            HttpStatus.FORBIDDEN);
+                                    HttpStatus.FORBIDDEN);
       }
       if (opUser.get().isVerified()) {
         return new ResponseEntity<>("Email already verified",
-            HttpStatus.FORBIDDEN);
+                                    HttpStatus.FORBIDDEN);
       }
       if (!jwtUtil.validateToken(verificationToken) ||
           !opUser.get().getVerificationToken().equals(verificationToken)) {
 
         return new ResponseEntity<>("Token invalid or expired",
-            HttpStatus.FORBIDDEN);
+                                    HttpStatus.FORBIDDEN);
       }
       User user = opUser.get();
       user.setVerificationToken(null);

@@ -4,6 +4,7 @@ import com.uiet.TradingApp.entity.User;
 import com.uiet.TradingApp.repository.UserRepository;
 import com.uiet.TradingApp.service.UserService;
 import java.util.List;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -14,10 +15,11 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/admin")
+@RequiredArgsConstructor
 public class AdminUserController {
 
-  @Autowired private UserService userService;
-  @Autowired private UserRepository userRepository;
+  private final UserService userService;
+  private final UserRepository userRepository;
 
   @GetMapping("/check")
   public ResponseEntity<?> checkAdmin() {

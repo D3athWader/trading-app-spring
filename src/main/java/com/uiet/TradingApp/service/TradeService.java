@@ -8,21 +8,23 @@ import com.uiet.TradingApp.entity.User;
 import com.uiet.TradingApp.repository.TradeRepository;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class TradeService {
 
-  @Autowired private TradeRepository tradeRepository;
-  @Autowired private UserService userService;
-  @Autowired private PortfolioService portfolioService;
-  @Autowired private StockService stockService;
-  @Autowired private CompanyService companyService;
+  private final TradeRepository tradeRepository;
+  private final UserService userService;
+  private final PortfolioService portfolioService;
+  private final StockService stockService;
+  private final CompanyService companyService;
 
   @Transactional
   public void newEntry(Trade trade) {
@@ -54,7 +56,6 @@ public class TradeService {
     tradeRepository.delete(trade);
   }
 
-  @Transactional(propagation = Propagation.MANDATORY)
   private void sendBalance(Trade trade) {
 
     BigDecimal toSend =
@@ -64,7 +65,6 @@ public class TradeService {
     trade.setSentBalance(true);
   }
 
-  @Transactional(propagation = Propagation.MANDATORY)
   private void addStocks(Trade trade) {
     log.info("INFO: Adding stocks quantity {} for user {}", trade.getQuantity(),
              trade.getBuyer());
@@ -73,7 +73,6 @@ public class TradeService {
     trade.setSentStocks(true);
   }
 
-  @Transactional(propagation = Propagation.MANDATORY)
   private void setPrices(Trade trade) {
     log.info("INFO: Updating price for stock {}", trade.getStock());
     Stock stock = trade.getStock();
