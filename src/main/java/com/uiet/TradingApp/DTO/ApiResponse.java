@@ -9,15 +9,15 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class ApiResponse<T> {
   private String message;
-  private T data;
+  private T object;
 
   public ApiResponse(String message) {
     this.message = message;
-    this.data = null;
+    this.object = null;
   }
 
   public ApiResponse(T data) {
     this.message = null;
-    this.data = data;
+    this.object = data;
   }
 }

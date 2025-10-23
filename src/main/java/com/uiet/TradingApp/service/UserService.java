@@ -5,6 +5,7 @@ import com.uiet.TradingApp.repository.UserRepository;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -19,8 +20,7 @@ public class UserService {
 
   private final UserRepository userRepository;
 
-  private static final PasswordEncoder PASSWORD_ENCODER =
-      new BCryptPasswordEncoder();
+  private static final PasswordEncoder PASSWORD_ENCODER = new BCryptPasswordEncoder();
 
   @Transactional
   public void saveUser(User user) {
@@ -86,6 +86,12 @@ public class UserService {
   public void deleteUserById(Long id) {
     log.info("INFO: Deleting user by id {}", id);
     userRepository.deleteById(id);
+  }
+
+  public List<String> getRolesByUsername(String username) {
+    User user = userRepository.findByUserName(username).orElseThrow(
+        () -> new RuntimeException("User not found"));
+    return user.getRole();
   }
 
   public List<User> getAll() {

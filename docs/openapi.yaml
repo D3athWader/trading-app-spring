@@ -342,6 +342,29 @@ paths:
             '*/*':
               schema:
                 $ref: "#/components/schemas/ApiResponseListOrder"
+  /company:
+    get:
+      tags:
+      - company-controller
+      operationId: getInfoAboutOwn
+      parameters:
+      - name: company
+        in: query
+        required: true
+        schema:
+          $ref: "#/components/schemas/Company"
+      - name: Authorization
+        in: header
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseCompany"
   /company/name/{companyName}:
     get:
       tags:
@@ -510,7 +533,7 @@ components:
       properties:
         message:
           type: string
-        data:
+        object:
           type: object
     User:
       type: object
@@ -668,21 +691,21 @@ components:
       properties:
         message:
           type: string
-        data:
+        object:
           $ref: "#/components/schemas/Stock"
     ApiResponseCompany:
       type: object
       properties:
         message:
           type: string
-        data:
+        object:
           $ref: "#/components/schemas/Company"
     ApiResponseUserDTO:
       type: object
       properties:
         message:
           type: string
-        data:
+        object:
           $ref: "#/components/schemas/UserDTO"
     UserDTO:
       type: object
@@ -699,7 +722,7 @@ components:
       properties:
         message:
           type: string
-        data:
+        object:
           type: array
           items:
             $ref: "#/components/schemas/User"
@@ -708,7 +731,7 @@ components:
       properties:
         message:
           type: string
-        data:
+        object:
           $ref: "#/components/schemas/StockDTO"
     StockDTO:
       type: object
@@ -737,7 +760,7 @@ components:
       properties:
         message:
           type: string
-        data:
+        object:
           type: array
           items:
             $ref: "#/components/schemas/StockDTO"
@@ -746,7 +769,7 @@ components:
       properties:
         message:
           type: string
-        data:
+        object:
           type: array
           items:
             $ref: "#/components/schemas/Order"
@@ -755,7 +778,7 @@ components:
       properties:
         message:
           type: string
-        data:
+        object:
           $ref: "#/components/schemas/CompanyDTO"
     CompanyDTO:
       type: object
@@ -773,7 +796,7 @@ components:
       properties:
         message:
           type: string
-        data:
+        object:
           type: array
           items:
             $ref: "#/components/schemas/CompanyDTO"

@@ -2,7 +2,6 @@ package com.uiet.TradingApp.config;
 
 import com.uiet.TradingApp.filter.JwtFilter;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -25,32 +24,44 @@ public class SpringSecurity {
   @Bean
   public SecurityFilterChain filterChain(HttpSecurity httpSecurity)
       throws Exception {
+    String isAdmin = "ROLE_ADMIN";
+    String isUser = "ROLE_USER";
+    String isCompany = "ROLE_COMPANY";
     httpSecurity.csrf(csrf -> csrf.disable())
         .authorizeHttpRequests(
-            auth
-            -> auth.requestMatchers("/admin/**")
-                   .hasAuthority("ROLE_ADMIN")
-                   .requestMatchers("/user-panel/**")
-                   .hasAuthority("ROLE_USER")
-                   .requestMatchers("/company/**")
-                   .hasAnyAuthority("ROLE_COMPANY", "ROLE_ADMIN", "ROLE_USER")
-                   .anyRequest()
-                   .permitAll());
-    httpSecurity
-        .sessionManagement(
-            session
-            -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-        .csrf(csrf -> csrf.disable());
+            auth -> auth.requestMatchers("/admin/**")
+                .hasAuthority(isAdmin)
+                .requestMatchers("/user-panel/**")
+                .hasAuthority(isUser)
+                .requestMatchers("/company")
+                .hasAuthority(isCompany)
+                .requestMatchers("/company/**")
+                .hasAnyAuthority(isCompany, isAdmin, isUser)
+                .requestMatchers("/order/**")
+                .hasAnyAuthority(isUser, isCompany, isAdmin)
+                .requestMatchers("/stock/**")
+                .hasAnyAuthority(isUser, isCompany, isAdmin)
+                .requestMatchers("/public/**")
+                .permitAll()
+                .requestMatchers("/ws/**")
+                .hasAnyAuthority(isUser, isAdmin, isCompany)
+                .requestMatchers("/v3/api-docs.yaml")
+                .permitAll()
+                .anyRequest()
+                .hasAuthority(isAdmin));
+    httpSecurity.sessionManagement(
+        session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
     httpSecurity.addFilterBefore(jwtFilter,
-                                 UsernamePasswordAuthenticationFilter.class);
+        UsernamePasswordAuthenticationFilter.class);
 
     return httpSecurity.build();
   }
 
   @Bean
   public AuthenticationManager
-  authenticationManager(AuthenticationConfiguration authenticationConfiguration)
-      throws Exception {
+
+      authenticationManager(AuthenticationConfiguration authenticationConfiguration)
+          throws Exception {
 
     return authenticationConfiguration.getAuthenticationManager();
   }
