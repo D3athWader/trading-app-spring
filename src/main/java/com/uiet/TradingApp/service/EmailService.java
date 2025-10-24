@@ -7,7 +7,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+import org.springframework.web.util.UriComponentsBuilder;
 
 @Slf4j
 @Service
@@ -18,19 +18,21 @@ public class EmailService {
   @Value("${spring.mail.username}") private String from;
   @Value("${verification.path}") private String verificationPath;
 
-  public void sendVerificationEmail(String email, String verificationToken) {
+  public void sendVerificationEmail(String email, String verificationToken,
+                                    String baseUrl) {
     String subject = "Email Verification";
     String path = verificationPath;
     String message = "Click the button below to verify your email";
-    sendEmail(email, subject, message, path, verificationToken);
+    sendEmail(email, subject, message, path, verificationToken, baseUrl);
   }
 
   public void sendEmail(String email, String subject, String message,
-                        String path, String verificationToken) {
+                        String path, String verificationToken, String baseUrl) {
     try {
-      String actionUrl = ServletUriComponentsBuilder.fromCurrentContextPath()
+      String actionUrl = UriComponentsBuilder.fromUriString(baseUrl)
                              .path(path)
                              .queryParam("token", verificationToken)
+                             .build(true)
                              .toUriString();
       String content = String.format("""
               <div style="font-family: Arial, sans-serif; max-width: 600px; background-color: #f2f2f2; padding: 20px; border-radius: 5px;">

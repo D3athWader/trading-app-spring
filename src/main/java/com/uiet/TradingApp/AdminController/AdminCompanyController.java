@@ -3,6 +3,7 @@ package com.uiet.TradingApp.AdminController;
 import com.uiet.TradingApp.DTO.ApiResponse;
 import com.uiet.TradingApp.entity.Company;
 import com.uiet.TradingApp.service.CompanyService;
+import com.uiet.TradingApp.service.UserService;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

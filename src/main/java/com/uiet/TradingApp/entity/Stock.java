@@ -1,5 +1,6 @@
 package com.uiet.TradingApp.entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -19,6 +20,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 @Entity
 @Data
@@ -26,10 +28,9 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@ToString(exclude = {"company", "portfolio"})
 public class Stock {
-  @Id
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
-  private Long id;
+  @Id @GeneratedValue(strategy = GenerationType.IDENTITY) private Long id;
 
   private BigDecimal totalPrice;
 
@@ -47,6 +48,7 @@ public class Stock {
 
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "company_id")
+  @JsonBackReference
   private Company company;
   @OneToMany(mappedBy = "stock", cascade = CascadeType.ALL)
   private List<Portfolio> portfolio;
@@ -61,6 +63,7 @@ public class Stock {
   @PrePersist
   @PreUpdate
   private void calculateTotalPrice() {
-    this.totalPrice = this.currentPrice.multiply(BigDecimal.valueOf(this.totalStocks));
+    this.totalPrice =
+        this.currentPrice.multiply(BigDecimal.valueOf(this.totalStocks));
   }
 }

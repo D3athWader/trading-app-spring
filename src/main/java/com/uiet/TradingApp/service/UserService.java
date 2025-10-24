@@ -20,7 +20,8 @@ public class UserService {
 
   private final UserRepository userRepository;
 
-  private static final PasswordEncoder PASSWORD_ENCODER = new BCryptPasswordEncoder();
+  private static final PasswordEncoder PASSWORD_ENCODER =
+      new BCryptPasswordEncoder();
 
   @Transactional
   public void saveUser(User user) {
@@ -72,7 +73,9 @@ public class UserService {
     return user.getId();
   }
 
-  public BigDecimal getUserBalance(User user) {
+  public BigDecimal getUserBalance(String username) {
+    User user = userRepository.findByUserName(username).orElseThrow(
+        () -> new RuntimeException("User not found"));
     log.info("INFO: Getting user balance for {}", user.getUserName());
     return user.getBalance();
   }
@@ -97,5 +100,13 @@ public class UserService {
   public List<User> getAll() {
     log.info("INFO: Getting all users");
     return userRepository.findAll();
+  }
+
+  public Optional<User> getUserByUsername(String username) {
+    return userRepository.findByUserName(username);
+  }
+
+  public Optional<User> getUserById(Long id) {
+    return userRepository.findById(id);
   }
 }

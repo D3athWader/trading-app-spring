@@ -29,30 +29,34 @@ public class SpringSecurity {
     String isCompany = "ROLE_COMPANY";
     httpSecurity.csrf(csrf -> csrf.disable())
         .authorizeHttpRequests(
-            auth -> auth.requestMatchers("/admin/**")
-                .hasAuthority(isAdmin)
-                .requestMatchers("/user-panel/**")
-                .hasAuthority(isUser)
-                .requestMatchers("/company")
-                .hasAuthority(isCompany)
-                .requestMatchers("/company/**")
-                .hasAnyAuthority(isCompany, isAdmin, isUser)
-                .requestMatchers("/order/**")
-                .hasAnyAuthority(isUser, isCompany, isAdmin)
-                .requestMatchers("/stock/**")
-                .hasAnyAuthority(isUser, isCompany, isAdmin)
-                .requestMatchers("/public/**")
-                .permitAll()
-                .requestMatchers("/ws/**")
-                .hasAnyAuthority(isUser, isAdmin, isCompany)
-                .requestMatchers("/v3/api-docs.yaml")
-                .permitAll()
-                .anyRequest()
-                .hasAuthority(isAdmin));
+            auth
+            -> auth.requestMatchers("/admin/**")
+                   .hasAuthority(isAdmin)
+                   .requestMatchers("/user-panel/**")
+                   .hasAuthority(isUser)
+                   .requestMatchers("/company")
+                   .hasAuthority(isCompany)
+                   .requestMatchers("/company/**")
+                   .hasAnyAuthority(isCompany, isAdmin, isUser)
+                   .requestMatchers("/order/**")
+                   .hasAnyAuthority(isUser, isCompany, isAdmin)
+                   .requestMatchers("/stock/**")
+                   .hasAnyAuthority(isUser, isCompany, isAdmin)
+                   .requestMatchers("/public/**")
+                   .permitAll()
+                   .requestMatchers("/ws/**")
+                   .hasAnyAuthority(isUser, isAdmin, isCompany)
+                   .requestMatchers("/portfolio/**")
+                   .hasAnyAuthority(isUser, isCompany, isAdmin)
+                   .requestMatchers("/portfolio/new-portfolio")
+                   .hasAnyAuthority(isAdmin, isCompany)
+                   .anyRequest()
+                   .permitAll());
     httpSecurity.sessionManagement(
-        session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+        session
+        -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
     httpSecurity.addFilterBefore(jwtFilter,
-        UsernamePasswordAuthenticationFilter.class);
+                                 UsernamePasswordAuthenticationFilter.class);
 
     return httpSecurity.build();
   }
@@ -60,8 +64,8 @@ public class SpringSecurity {
   @Bean
   public AuthenticationManager
 
-      authenticationManager(AuthenticationConfiguration authenticationConfiguration)
-          throws Exception {
+  authenticationManager(AuthenticationConfiguration authenticationConfiguration)
+      throws Exception {
 
     return authenticationConfiguration.getAuthenticationManager();
   }

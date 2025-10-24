@@ -1,5 +1,6 @@
 package com.uiet.TradingApp.entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -24,6 +25,9 @@ public class Portfolio {
   @Id @GeneratedValue(strategy = GenerationType.IDENTITY) private Long id;
   private Long quantity;
   private BigDecimal averagePricePaid;
-  @ManyToOne @JoinColumn(name = "user_id") private User user;
-  @ManyToOne @JoinColumn(name = "stock_id") private Stock stock;
+  @JsonBackReference @ManyToOne @JoinColumn(name = "user_id") private User user;
+  @JsonBackReference
+  @ManyToOne
+  @JoinColumn(name = "stock_id")
+  private Stock stock;
 }

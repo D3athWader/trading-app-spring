@@ -1,6 +1,7 @@
 package com.uiet.TradingApp.controller;
 
 import com.uiet.TradingApp.DTO.ApiResponse;
+import com.uiet.TradingApp.DTO.NewOrder;
 import com.uiet.TradingApp.entity.Order;
 import com.uiet.TradingApp.repository.OrderRepository;
 import com.uiet.TradingApp.service.OrderService;
@@ -30,7 +31,13 @@ public class OrderController {
   private static final String ERROR_STRING = "ERROR: ";
 
   @PostMapping("/buy-order")
-  public ResponseEntity<ApiResponse<Void>> buyOrder(@RequestBody Order order) {
+  public ResponseEntity<ApiResponse<Void>>
+  buyOrder(@RequestBody NewOrder newOrder,
+           @RequestHeader("Authorization") String authHeader) {
+    authHeader = authHeader.substring(7);
+    String username = jwtUtil.extractUsername(authHeader);
+    newOrder.setUsername(username);
+    Order order = orderService.createOrder(newOrder);
     try {
       orderService.placeBuyOrder(order);
       return new ResponseEntity<>(HttpStatus.CREATED);
@@ -41,7 +48,10 @@ public class OrderController {
   }
 
   @PostMapping("/sell-order")
-  public ResponseEntity<ApiResponse<Void>> sellOrder(@RequestBody Order order) {
+  public ResponseEntity<ApiResponse<Void>>
+
+  sellOrder(@RequestBody NewOrder newOrder) {
+    Order order = orderService.createOrder(newOrder);
     try {
       orderService.placeSellOrder(order);
       return new ResponseEntity<>(HttpStatus.CREATED);
@@ -105,11 +115,13 @@ public class OrderController {
   public ResponseEntity<ApiResponse<List<Order>>>
   getAllOrders(@RequestHeader("Authorization") String authHeader) {
     try {
+      authHeader = authHeader.substring(7);
       String username = jwtUtil.extractUsername(authHeader);
       return ResponseEntity.ok(
           new ApiResponse<>(orderRepository.findByUser_UserName(username)));
     } catch (Exception e) {
-      return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+      return new ResponseEntity<>(new ApiResponse<>("Exception: " + e),
+                                  HttpStatus.FORBIDDEN);
     }
   }
 }

@@ -60,6 +60,30 @@ paths:
             '*/*':
               schema:
                 $ref: "#/components/schemas/ApiResponseVoid"
+  /portfolio/create-portfolio:
+    post:
+      tags:
+      - portfolio-controller
+      operationId: createPortfolio
+      parameters:
+      - name: Authorization
+        in: header
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NewPortfolio"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponsePortfolio"
   /order/sell-order:
     post:
       tags:
@@ -69,7 +93,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Order"
+              $ref: "#/components/schemas/NewOrder"
         required: true
       responses:
         "200":
@@ -83,11 +107,17 @@ paths:
       tags:
       - order-controller
       operationId: buyOrder
+      parameters:
+      - name: Authorization
+        in: header
+        required: true
+        schema:
+          type: string
       requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Order"
+              $ref: "#/components/schemas/NewOrder"
         required: true
       responses:
         "200":
@@ -162,6 +192,24 @@ paths:
             '*/*':
               schema:
                 $ref: "#/components/schemas/ApiResponseVoid"
+  /user-panel/get-balance:
+    get:
+      tags:
+      - user-controller
+      operationId: getBalance
+      parameters:
+      - name: Authorization
+        in: header
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseBigDecimal"
   /user-panel/find-user/{userName}:
     get:
       tags:
@@ -569,6 +617,22 @@ components:
           type: string
         verified:
           type: boolean
+    NewPortfolio:
+      type: object
+      properties:
+        userId:
+          type: integer
+          format: int64
+        stockId:
+          type: integer
+          format: int64
+    ApiResponsePortfolio:
+      type: object
+      properties:
+        message:
+          type: string
+        object:
+          $ref: "#/components/schemas/Portfolio"
     Company:
       type: object
       properties:
@@ -590,39 +654,6 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/Stock"
-    Order:
-      type: object
-      properties:
-        id:
-          type: integer
-          format: int64
-        user:
-          $ref: "#/components/schemas/User"
-        stock:
-          $ref: "#/components/schemas/Stock"
-        quantity:
-          type: integer
-          format: int64
-        price:
-          type: number
-        type:
-          type: string
-          enum:
-          - BUY
-          - SELL
-        status:
-          type: string
-          enum:
-          - PENDING
-          - PARTIALLY_FILLED
-          - FILLED
-          - CANCELLED
-        timestamp:
-          type: string
-          format: date-time
-        remainingQuantity:
-          type: integer
-          format: int64
     Portfolio:
       type: object
       properties:
@@ -673,6 +704,23 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/Portfolio"
+    NewOrder:
+      type: object
+      properties:
+        stockSymbol:
+          type: string
+        quantity:
+          type: integer
+          format: int64
+        price:
+          type: number
+        type:
+          type: string
+          enum:
+          - BUY
+          - SELL
+        username:
+          type: string
     NewStock:
       type: object
       properties:
@@ -683,7 +731,7 @@ components:
         totalStocks:
           type: integer
           format: int64
-        company_id:
+        companyId:
           type: integer
           format: int64
     ApiResponseStock:
@@ -700,6 +748,13 @@ components:
           type: string
         object:
           $ref: "#/components/schemas/Company"
+    ApiResponseBigDecimal:
+      type: object
+      properties:
+        message:
+          type: string
+        object:
+          type: number
     ApiResponseUserDTO:
       type: object
       properties:
@@ -736,9 +791,12 @@ components:
     StockDTO:
       type: object
       properties:
+        id:
+          type: integer
+          format: int64
         symbol:
           type: string
-        company_name:
+        companyName:
           type: string
         sector:
           type: string
@@ -773,6 +831,39 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/Order"
+    Order:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        user:
+          $ref: "#/components/schemas/User"
+        stock:
+          $ref: "#/components/schemas/Stock"
+        quantity:
+          type: integer
+          format: int64
+        price:
+          type: number
+        type:
+          type: string
+          enum:
+          - BUY
+          - SELL
+        status:
+          type: string
+          enum:
+          - PENDING
+          - PARTIALLY_FILLED
+          - FILLED
+          - CANCELLED
+        timestamp:
+          type: string
+          format: date-time
+        remainingQuantity:
+          type: integer
+          format: int64
     ApiResponseCompanyDTO:
       type: object
       properties:

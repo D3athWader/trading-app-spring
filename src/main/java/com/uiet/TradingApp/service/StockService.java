@@ -20,7 +20,6 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class StockService {
   private final StockRepository stockRepository;
-  private final CompanyService companyService;
 
   public Optional<Stock> getStockBySymbol(String symbol) {
     log.info("INFO: Getting stock by symbol {}", symbol);
@@ -81,6 +80,7 @@ public class StockService {
 
   public StockDTO dtoBuilder(Stock stock) {
     StockDTO stockDTO = StockDTO.builder()
+                            .id(stock.getId())
                             .closePrice(stock.getClosePrice())
                             .currentPrice(stock.getCurrentPrice())
                             .highPrice(stock.getHighPrice())
@@ -88,7 +88,7 @@ public class StockService {
                             .openPrice(stock.getOpenPrice())
                             .symbol(stock.getSymbol())
                             .tradedVolume(stock.getTradedVolume())
-                            .company_name(stock.getCompany().getName())
+                            .companyName(stock.getCompany().getName())
                             .sector(stock.getCompany().getSector())
                             .build();
     log.info("INFO: Creating stock DTO for symbol {}", stock.getSymbol());
@@ -139,20 +139,16 @@ public class StockService {
   }
 
   @Transactional
-  public Stock createStockAndUpdate(NewStock newStock) {
-    Long companyId = newStock.getCompany_id();
-    Optional<Company> opCompany = companyService.findById(companyId);
-    if (opCompany.isEmpty()) {
-      log.error("ERROR: Company not found {} ", companyId);
-      throw new RuntimeException("Company not found");
-    }
-    Company company = opCompany.get();
+  public Stock createStockAndUpdate(NewStock newStock, Company company) {
     Stock stock = buildStock(newStock, company);
     stock.setLastUpdated(LocalDateTime.now());
     stockRepository.save(stock);
     log.info("INFO: Stock created successfully {}", newStock.getSymbol());
-    companyService.saveEntry(company);
-    log.info("INFO: Company updated successfully {}", company.getName());
     return stock;
+  }
+
+  public Optional<Stock> getStockById(Long id) {
+    log.info("INFO: Getting stock by id {}", id);
+    return stockRepository.findById(id);
   }
 }

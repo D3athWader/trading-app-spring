@@ -12,5 +12,5 @@ public class NewStock {
   private String symbol;
   private BigDecimal openPrice;
   private Long totalStocks;
-  private Long company_id;
+  private Long companyId;
 }

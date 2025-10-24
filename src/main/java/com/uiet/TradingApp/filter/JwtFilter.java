@@ -36,6 +36,7 @@ public class JwtFilter extends OncePerRequestFilter {
     String username = null;
     String jwt = null;
     String path = request.getServletPath();
+    log.info("Authorization header raw value: '{}'", authorizationHeader);
     if (path.startsWith("/public/")) {
       filterChain.doFilter(request, response);
       return;
@@ -48,7 +49,7 @@ public class JwtFilter extends OncePerRequestFilter {
     if (authorizationHeader != null &&
         authorizationHeader.startsWith("Bearer ")) {
       try {
-        jwt = authorizationHeader.substring(7);
+        jwt = authorizationHeader.substring(7).trim();
         username = jwtUtil.extractUsername(jwt);
       } catch (Exception e) {
         log.error("Error in JWT filter {}", e);

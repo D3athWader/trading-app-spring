@@ -1,5 +1,6 @@
 package com.uiet.TradingApp.service;
 
+import com.uiet.TradingApp.DTO.NewOrder;
 import com.uiet.TradingApp.entity.Enum.OrderStatus;
 import com.uiet.TradingApp.entity.Enum.OrderType;
 import com.uiet.TradingApp.entity.Order;
@@ -11,10 +12,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
@@ -25,7 +23,8 @@ public class OrderService {
   private final OrderRepository orderRepository;
   private final UserService userService;
   private final PortfolioService portfolioService;
-  @Autowired @Lazy OrderMatchingService orderMatchingService;
+  private final StockService stockService;
+  private final OrderMatchingService orderMatchingService;
 
   @Transactional
   public boolean placeSellOrder(Order order) {
@@ -47,21 +46,23 @@ public class OrderService {
 
   @Transactional
   public void placeBuyOrder(Order order) {
+    log.info("Trying to place buy order");
     BigDecimal orderValue = order.getStock().getCurrentPrice().multiply(
         BigDecimal.valueOf(order.getQuantity()));
-    if (orderValue.compareTo(userService.getUserBalance(order.getUser())) <=
-        0) {
-      order.setType(OrderType.BUY);
-      order.setStatus(OrderStatus.PENDING);
-      order.setTimestamp(LocalDateTime.now());
-      order.setPrice(order.getStock().getCurrentPrice());
-      userService.deductBalance(order.getUser(), orderValue);
-      log.info("INFO: Placing buy order for {}", order.getStock().getSymbol());
-      orderRepository.save(order);
-      orderMatchingService.buyOrderMatcher(order);
-    } else {
+    BigDecimal userBalance =
+        userService.getUserBalance(order.getUser().getUserName());
+    log.info("User balance: {}, Order value: {}", userBalance, orderValue);
+    if (orderValue.compareTo(userBalance) > 0) {
       throw new RuntimeException("Insufficient balance");
     }
+    order.setType(OrderType.BUY);
+    order.setStatus(OrderStatus.PENDING);
+    order.setTimestamp(LocalDateTime.now());
+    order.setPrice(order.getStock().getCurrentPrice());
+    userService.deductBalance(order.getUser(), orderValue);
+    log.info("INFO: Placing buy order for {}", order.getStock().getSymbol());
+    orderRepository.save(order);
+    orderMatchingService.buyOrderMatcher(order);
   }
 
   public List<Order> ordersFromTime(LocalDateTime fromTime) {
@@ -96,21 +97,22 @@ public class OrderService {
     orderRepository.save(order);
   }
 
-  public List<Order> buyOrderMatcherHelper(Stock stock, OrderType type,
-                                           List<OrderStatus> status,
-                                           BigDecimal price) {
-    return orderRepository
-        .findByStockAndTypeAndStatusInAndPriceLessThanEqualOrderByPriceAsc(
-            stock, type, status, price);
-  }
-
-  public List<Order> sellOrderMatcherHelper(Stock stock, OrderType type,
-                                            List<OrderStatus> status,
-                                            BigDecimal price) {
-    return orderRepository
-        .findByStockAndTypeAndStatusInAndPriceGreaterThanEqualOrderByPriceDesc(
-            stock, type, status, price);
-  }
-
   public void saveEntry(Order order) { orderRepository.save(order); }
+
+  public Order createOrder(NewOrder newOrder) {
+    Stock stock =
+        stockService.getStockBySymbol(newOrder.getStockSymbol())
+            .orElseThrow(() -> new RuntimeException("Stock not found"));
+    User user = userService.getUserByUsername(newOrder.getUsername())
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+    return Order.builder()
+        .stock(stock)
+        .user(user)
+        .quantity(newOrder.getQuantity())
+        .price(newOrder.getPrice())
+        .type(newOrder.getType())
+        .status(OrderStatus.PENDING)
+        .timestamp(LocalDateTime.now())
+        .build();
+  }
 }

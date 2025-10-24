@@ -32,14 +32,16 @@ public class CompanyController {
     if (companies.isEmpty()) {
       return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     } else {
-      List<CompanyDTO> companiesDTO = companies.stream().map(this::convertToDTO).toList();
+      List<CompanyDTO> companiesDTO =
+          companies.stream().map(this::convertToDTO).toList();
       return new ResponseEntity<>(new ApiResponse<>(companiesDTO),
-          HttpStatus.OK);
+                                  HttpStatus.OK);
     }
   }
 
   @GetMapping("/id/{id}")
-  public ResponseEntity<ApiResponse<CompanyDTO>> getCompanyById(@PathVariable Long id) {
+  public ResponseEntity<ApiResponse<CompanyDTO>>
+  getCompanyById(@PathVariable Long id) {
     Optional<Company> company = companyService.findById(id);
     if (company.isPresent()) {
       return new ResponseEntity<>(
@@ -50,7 +52,8 @@ public class CompanyController {
   }
 
   @GetMapping("/name/{companyName}")
-  public ResponseEntity<ApiResponse<CompanyDTO>> findCompanyByName(@PathVariable String companyName) {
+  public ResponseEntity<ApiResponse<CompanyDTO>>
+  findCompanyByName(@PathVariable String companyName) {
     Optional<Company> company = companyService.getByName(companyName);
     if (company.isPresent()) {
       return new ResponseEntity<>(
@@ -61,14 +64,14 @@ public class CompanyController {
   }
 
   @GetMapping
-  public ResponseEntity<ApiResponse<Company>> getInfoAboutOwn(Company company,
-      @RequestHeader("Authorization") String authHeader) {
-    String token = authHeader.substring(7);
-    String username = jwtUtil.extractUsername(token);
+  public ResponseEntity<ApiResponse<Company>>
+  getInfoAboutOwn(Company company,
+                  @RequestHeader("Authorization") String authHeader) {
+    String username = jwtUtil.extractUsername(authHeader);
     List<String> roles = userService.getRolesByUsername(username);
     if (!roles.contains("COMPANY")) {
       return new ResponseEntity<>(new ApiResponse<>("You are not a company"),
-          HttpStatus.FORBIDDEN);
+                                  HttpStatus.FORBIDDEN);
     }
     return new ResponseEntity<>(new ApiResponse<>(company), HttpStatus.OK);
   }

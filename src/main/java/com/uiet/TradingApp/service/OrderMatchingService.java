@@ -3,6 +3,9 @@ package com.uiet.TradingApp.service;
 import com.uiet.TradingApp.entity.Enum.OrderStatus;
 import com.uiet.TradingApp.entity.Enum.OrderType;
 import com.uiet.TradingApp.entity.Order;
+import com.uiet.TradingApp.entity.Stock;
+import com.uiet.TradingApp.repository.OrderRepository;
+import java.math.BigDecimal;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -13,8 +16,8 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 public class OrderMatchingService {
-  private final OrderService orderService;
   private final TradeService tradeService;
+  private final OrderRepository orderRepository;
 
   @Transactional
   public void buyOrderMatcher(Order buyOrder) {
@@ -23,7 +26,7 @@ public class OrderMatchingService {
     Long fulfilledStocks = 0L;
     List<OrderStatus> status =
         List.of(OrderStatus.PENDING, OrderStatus.PARTIALLY_FILLED);
-    List<Order> sellOrders = orderService.buyOrderMatcherHelper(
+    List<Order> sellOrders = buyOrderMatcherHelper(
         buyOrder.getStock(), OrderType.SELL, status, buyOrder.getPrice());
     int i = 0;
     while (fulfilledStocks < neededStocks && i < sellOrders.size()) {
@@ -34,7 +37,7 @@ public class OrderMatchingService {
         fulfilledStocks += currentOrderQuantity;
         sellOrder.setStatus(OrderStatus.FILLED);
         log.info("INFO: FULLY FILLED Sell Order {}", sellOrder.getId());
-        orderService.saveEntry(sellOrder);
+        orderRepository.save(sellOrder);
         tradeService.newEntry(tradeService.newTrade(
             buyOrder.getUser(), sellOrder.getUser(), buyOrder.getStock(),
             sellOrder.getQuantity(), sellOrder.getPrice()));
@@ -46,7 +49,7 @@ public class OrderMatchingService {
         Long quantity = currentOrderQuantity - (neededStocks - fulfilledStocks);
         Long tradedQty = neededStocks - fulfilledStocks;
         sellOrder.setQuantity(quantity);
-        orderService.saveEntry(sellOrder);
+        orderRepository.save(sellOrder);
         tradeService.newEntry(tradeService.newTrade(
             buyOrder.getUser(), sellOrder.getUser(), buyOrder.getStock(),
             tradedQty, sellOrder.getPrice()));
@@ -62,7 +65,7 @@ public class OrderMatchingService {
       buyOrder.setQuantity(neededStocks - fulfilledStocks);
       log.info("INFO: PARTIALLY FILLED Buy Order {}", buyOrder.getId());
     }
-    orderService.saveEntry(buyOrder);
+    orderRepository.save(buyOrder);
   }
 
   @Transactional
@@ -71,7 +74,7 @@ public class OrderMatchingService {
     Long soldStocks = 0L;
     List<OrderStatus> status =
         List.of(OrderStatus.PENDING, OrderStatus.PARTIALLY_FILLED);
-    List<Order> buyOrders = orderService.sellOrderMatcherHelper(
+    List<Order> buyOrders = sellOrderMatcherHelper(
         sellOrder.getStock(), OrderType.BUY, status, sellOrder.getPrice());
 
     int i = 0;
@@ -81,7 +84,7 @@ public class OrderMatchingService {
       if (currentOrderQuantity + soldStocks <= sellingStocks) { // FULLY FILLED
         buyOrder.setStatus(OrderStatus.FILLED);
         log.info("INFO: FULLY FILLED Buy Order {}", buyOrder.getId());
-        orderService.saveEntry(buyOrder);
+        orderRepository.save(buyOrder);
         tradeService.newEntry(tradeService.newTrade(
             buyOrder.getUser(), sellOrder.getUser(), buyOrder.getStock(),
             sellOrder.getQuantity(), sellOrder.getPrice()));
@@ -96,7 +99,7 @@ public class OrderMatchingService {
         tradeService.newEntry(tradeService.newTrade(
             buyOrder.getUser(), sellOrder.getUser(), buyOrder.getStock(),
             sellOrder.getQuantity(), buyOrder.getPrice()));
-        orderService.saveEntry(buyOrder);
+        orderRepository.save(buyOrder);
         soldStocks = sellingStocks;
       }
       i++;
@@ -109,6 +112,22 @@ public class OrderMatchingService {
       sellOrder.setQuantity(sellingStocks - soldStocks);
       log.info("INFO: PARTIALLY FILLED Sell Order {}", sellOrder.getId());
     }
-    orderService.saveEntry(sellOrder);
+    orderRepository.save(sellOrder);
+  }
+
+  public List<Order> buyOrderMatcherHelper(Stock stock, OrderType type,
+                                           List<OrderStatus> status,
+                                           BigDecimal price) {
+    return orderRepository
+        .findByStockAndTypeAndStatusInAndPriceLessThanEqualOrderByPriceAsc(
+            stock, type, status, price);
+  }
+
+  public List<Order> sellOrderMatcherHelper(Stock stock, OrderType type,
+                                            List<OrderStatus> status,
+                                            BigDecimal price) {
+    return orderRepository
+        .findByStockAndTypeAndStatusInAndPriceGreaterThanEqualOrderByPriceDesc(
+            stock, type, status, price);
   }
 }

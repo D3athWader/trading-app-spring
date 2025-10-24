@@ -7,6 +7,7 @@ import com.uiet.TradingApp.repository.UserRepository;
 import com.uiet.TradingApp.service.EmailService;
 import com.uiet.TradingApp.service.UserService;
 import com.uiet.TradingApp.utils.JwtUtil;
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -29,6 +30,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 @RestController
 @RequestMapping("/public")
@@ -87,7 +89,12 @@ public class PublicController {
   @Async
   @PostMapping("/verify")
   public CompletableFuture<ResponseEntity<ApiResponse<Void>>>
-  verifyEmail(@RequestBody AuthRequest authRequest) {
+  verifyEmail(@RequestBody AuthRequest authRequest,
+              HttpServletRequest request) {
+    String baseUrl = ServletUriComponentsBuilder.fromRequestUri(request)
+                         .replacePath(null)
+                         .build()
+                         .toUriString();
     return CompletableFuture.supplyAsync(() -> {
       try {
         authenticationManager.authenticate(
@@ -109,7 +116,8 @@ public class PublicController {
         String verificationToken =
             jwtUtil.generateEmailVerificationToken(user.getEmail());
         user.setVerificationToken(verificationToken);
-        emailService.sendVerificationEmail(user.getEmail(), verificationToken);
+        emailService.sendVerificationEmail(user.getEmail(), verificationToken,
+                                           baseUrl);
         userService.saveUser(user);
         return ResponseEntity.ok(new ApiResponse<>("Verification email sent!"));
       } catch (Exception e) {

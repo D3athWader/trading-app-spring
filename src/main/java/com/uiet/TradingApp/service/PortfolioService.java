@@ -1,5 +1,6 @@
 package com.uiet.TradingApp.service;
 
+import com.uiet.TradingApp.DTO.NewPortfolio;
 import com.uiet.TradingApp.entity.Portfolio;
 import com.uiet.TradingApp.entity.Stock;
 import com.uiet.TradingApp.entity.User;
@@ -17,6 +18,8 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class PortfolioService {
   private final PortfolioRepository portfolioRepository;
+  private final UserService userService;
+  private final StockService stockService;
 
   public Long getUserStockQuantity(User user, Stock stock) {
 
@@ -74,5 +77,43 @@ public class PortfolioService {
       log.info("INFO: Creating new portfolio for user {}", user.getUserName());
       portfolioRepository.save(newPortfolio);
     }
+  }
+
+  @Transactional
+  public Portfolio createEntry(NewPortfolio newPortfolio) {
+    log.info("INFO: Creating new portfolio for user {}",
+             newPortfolio.getUserId());
+    log.info("INFO: Creating new portfolio for stock {}",
+             newPortfolio.getStockId());
+    User user = userService.getUserById(newPortfolio.getUserId())
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+    Stock stock =
+        stockService.getStockById(newPortfolio.getStockId())
+            .orElseThrow(() -> new RuntimeException("Invalid Stock ID"));
+    Portfolio portfolio = Portfolio.builder()
+                              .user(user)
+                              .stock(stock)
+                              .quantity(stock.getTotalStocks())
+                              .averagePricePaid(stock.getCurrentPrice())
+                              .build();
+    log.info("INFO: Creating new portfolio for user {}", user.getUserName());
+    return portfolio;
+  }
+
+  @Transactional
+  public void newEntry(Portfolio portfolio) {
+    User user = userService.getUserById(portfolio.getUser().getId())
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+    Stock stock =
+        stockService.getStockById(portfolio.getStock().getId())
+            .orElseThrow(() -> new RuntimeException("Stock not found"));
+
+    portfolio.setUser(user);
+    portfolio.setStock(stock);
+    log.info(
+        "Saving portfolio -> userId={}, stockId={}, quantity={}, avgPrice={}",
+        portfolio.getUser().getId(), portfolio.getStock().getId(),
+        portfolio.getQuantity(), portfolio.getAveragePricePaid());
+    portfolioRepository.save(portfolio);
   }
 }

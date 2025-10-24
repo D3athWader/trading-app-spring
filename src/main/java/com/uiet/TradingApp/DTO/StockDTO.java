@@ -12,8 +12,9 @@ import lombok.NoArgsConstructor;
 @Builder
 public class StockDTO {
 
+  private Long id;
   private String symbol;
-  private String company_name;
+  private String companyName;
   private String sector;
   private BigDecimal currentPrice;
   private BigDecimal openPrice;
