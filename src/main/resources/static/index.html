@@ -5,8 +5,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Trading App</title>
-  <!-- Bootstrap CSS -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <!-- Bootstrap CSS with SRI -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+    xintegrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous" />
   <!-- Custom CSS -->
   <link href="styles.css" rel="stylesheet" />
   <style>
@@ -220,19 +221,25 @@
         <div id="toast-body" class="toast-body">
           <!-- Message here -->
         </div>
-        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"
+        <button type="button" class="btn-close btn-close-white me-2 m-auto" data="bs-dismiss"
           aria-label="Close"></button>
       </div>
     </div>
   </div>
 
-  <!-- Bootstrap JS -->
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- Bootstrap JS with SRI -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+    xintegrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+    crossorigin="anonymous"></script>
 
-  <!-- *** ADDED THESE SCRIPTS *** -->
-  <!-- SockJS and STOMP.js for WebSocket fallback (v2.3.3) -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.6.1/sockjs.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+  <!-- SockJS with SRI -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.6.1/sockjs.min.js"
+    xintegrity="sha512-vHuAhy/Uci5kQgsEebR9mR/fL8D/WsG8T+1EUnQTCeKwYMSIinKNeFq+sC/dKviSAJjW-BfItj/G/BbjOB-pA=="
+    crossorigin="anonymous"></script>
+
+  <!-- STOMP.js with SRI -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"
+    integrity="sha256-R/q/VLfKIR/p/1nRh/8/h/rFIKiP+9/sL/M/qV/8/uE=" crossorigin="anonymous"></script>
 
   <!-- App Logic (must be last) -->
   <script src="app.js"></script>
