@@ -1,0 +1,869 @@
+import React, { useState, useEffect } from "react";
+import {
+	LayoutDashboard,
+	LineChart,
+	PieChart,
+	LogOut,
+	Wallet,
+	DollarSign,
+	Bell,
+	Search,
+	Plus,
+	Minus,
+	RefreshCw,
+	Settings,
+	Sun,
+	Moon,
+	ShieldCheck,
+	User as UserIcon,
+	Lock,
+	CheckCircle,
+} from "lucide-react";
+
+const { API_BASE_URL } = window.AppConfig;
+const { Button, Alert, StatCard, InputField } = window.UI;
+
+const TradeModal = ({
+	isOpen,
+	onClose,
+	type,
+	stockSymbol,
+	currentPrice,
+	token,
+	username,
+	onTradeComplete,
+}) => {
+	const [quantity, setQuantity] = useState(1);
+	const [isLoading, setIsLoading] = useState(false);
+	const [status, setStatus] = useState(null);
+
+	if (!isOpen) return null;
+
+	const handleTrade = async () => {
+		setIsLoading(true);
+		setStatus(null);
+		try {
+			const endpoint =
+				type === "BUY" ? "/order/buy-order" : "/order/sell-order";
+			const payload = {
+				stockSymbol,
+				quantity: parseInt(quantity),
+				price: currentPrice,
+				type: type,
+				username: username,
+			};
+
+			const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+					Authorization: `Bearer ${token}`,
+				},
+				body: JSON.stringify(payload),
+			});
+
+			if (response.ok) {
+				setStatus({
+					type: "success",
+					message: `Order to ${type} ${quantity} ${stockSymbol} placed!`,
+				});
+				setTimeout(() => {
+					onTradeComplete();
+					onClose();
+				}, 1500);
+			} else {
+				setStatus({
+					type: "error",
+					message: "Trade failed. Check balance/holdings.",
+				});
+			}
+		} catch (e) {
+			console.error(e);
+			setStatus({ type: "error", message: "Network error occurred." });
+		} finally {
+			setIsLoading(false);
+		}
+	};
+
+	return (
+		<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+			<div className="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-sm p-6 shadow-2xl animate-fade-in">
+				<h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">
+					{type === "BUY" ? "Buy" : "Sell"} {stockSymbol}
+				</h3>
+
+				<div className="space-y-4 mb-6">
+					<div className="flex justify-between text-sm text-gray-500 dark:text-gray-400">
+						<span>Price per share</span>
+						<span className="font-medium text-gray-900 dark:text-white">
+							${currentPrice}
+						</span>
+					</div>
+					<div className="flex items-center gap-3">
+						<button
+							type="button"
+							onClick={() => setQuantity(Math.max(1, quantity - 1))}
+							className="p-2 rounded-lg border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300"
+						>
+							<Minus size={16} />
+						</button>
+						<input
+							type="number"
+							min="1"
+							value={quantity}
+							onChange={(e) => setQuantity(parseInt(e.target.value) || 0)}
+							className="flex-1 text-center py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white"
+						/>
+						<button
+							type="button"
+							onClick={() => setQuantity(quantity + 1)}
+							className="p-2 rounded-lg border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300"
+						>
+							<Plus size={16} />
+						</button>
+					</div>
+					<div className="flex justify-between text-sm font-bold pt-4 border-t border-gray-100 dark:border-gray-700">
+						<span className="text-gray-900 dark:text-white">Total</span>
+						<span className="text-indigo-600 dark:text-indigo-400">
+							${(currentPrice * quantity).toFixed(2)}
+						</span>
+					</div>
+				</div>
+
+				<Alert
+					type={status && status.type}
+					message={status && status.message}
+				/>
+
+				<div className="flex gap-3 mt-4">
+					<Button variant="secondary" onClick={onClose} className="flex-1">
+						Cancel
+					</Button>
+					<Button
+						variant={type === "BUY" ? "primary" : "danger"}
+						className="flex-1"
+						isLoading={isLoading}
+						onClick={handleTrade}
+					>
+						Confirm {type}
+					</Button>
+				</div>
+			</div>
+		</div>
+	);
+};
+
+const SettingsPanel = ({ user, token, onUpdate }) => {
+	const [amount, setAmount] = useState("");
+	const [balanceStatus, setBalanceStatus] = useState(null);
+	const [totpStatus, setTotpStatus] = useState(null);
+	const [loadingBalance, setLoadingBalance] = useState(false);
+	const [loadingTotp, setLoadingTotp] = useState(false);
+
+	// State for TOTP logic
+	const [tempTotpToken, setTempTotpToken] = useState(null);
+	const [qrCode, setQrCode] = useState(null);
+	const [otpInput, setOtpInput] = useState("");
+
+	// Independent TOTP Status State
+	const [isTotpEnabled, setIsTotpEnabled] = useState(false);
+
+	// Fetch real TOTP status on mount using the new endpoint
+	useEffect(() => {
+		const checkTotpStatus = async () => {
+			try {
+				const response = await fetch(`${API_BASE_URL}/user-panel/totp-status`, {
+					method: "GET",
+					headers: { Authorization: `Bearer ${token}` },
+				});
+				if (response.ok) {
+					const data = await response.json();
+					setIsTotpEnabled(data.object === true);
+				}
+			} catch (e) {
+				console.error("Failed to check TOTP status", e);
+			}
+		};
+		checkTotpStatus();
+	}, [token]);
+
+	const handleAddBalance = async (e) => {
+		e.preventDefault();
+		if (!amount || isNaN(amount) || amount <= 0) return;
+
+		setLoadingBalance(true);
+		setBalanceStatus(null);
+		try {
+			const response = await fetch(
+				`${API_BASE_URL}/user-panel/add-balance?balance=${amount}`,
+				{
+					method: "GET",
+					headers: { Authorization: `Bearer ${token}` },
+				},
+			);
+
+			if (response.ok) {
+				setBalanceStatus({
+					type: "success",
+					message: `Successfully added $${amount}`,
+				});
+				setAmount("");
+				onUpdate();
+			} else {
+				setBalanceStatus({ type: "error", message: "Failed to add balance." });
+			}
+		} catch (err) {
+			setBalanceStatus({ type: "error", message: "Network error." });
+		} finally {
+			setLoadingBalance(false);
+		}
+	};
+
+	const handleInitTotp = async () => {
+		setLoadingTotp(true);
+		setTotpStatus(null);
+		try {
+			const response = await fetch(`${API_BASE_URL}/user-panel/enable-totp`, {
+				method: "GET",
+				headers: { Authorization: `Bearer ${token}` },
+			});
+
+			const data = await response.json();
+			if (response.ok) {
+				// API: message contains QR Code (base64), object contains tempJwt
+				setQrCode(data.message);
+				setTempTotpToken(data.object);
+				setTotpStatus({
+					type: "success",
+					message: "Scan the QR Code and enter the code below.",
+				});
+			} else {
+				setTotpStatus({ type: "error", message: "Failed to fetch QR Code." });
+			}
+		} catch (err) {
+			setTotpStatus({ type: "error", message: "Network error." });
+		} finally {
+			setLoadingTotp(false);
+		}
+	};
+
+	const handleConfirmTotp = async (e) => {
+		e.preventDefault();
+		if (!otpInput || otpInput.length < 6) return;
+		if (!user || !user.id) {
+			setTotpStatus({
+				type: "error",
+				message: "User ID missing. Please refresh.",
+			});
+			return;
+		}
+		if (!tempTotpToken) {
+			setTotpStatus({
+				type: "error",
+				message: "Session expired. Please try enabling again.",
+			});
+			return;
+		}
+
+		setLoadingTotp(true);
+		try {
+			const response = await fetch(`${API_BASE_URL}/totp/setup`, {
+				method: "POST",
+				headers: {
+					Authorization: `Bearer ${tempTotpToken}`,
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify({
+					userId: user.id,
+					otp: otpInput,
+				}),
+			});
+
+			const data = await response.json();
+			if (response.ok && data.object === true) {
+				setTotpStatus({
+					type: "success",
+					message: "TOTP Enabled Successfully!",
+				});
+				setQrCode(null);
+				setOtpInput("");
+				setTempTotpToken(null);
+				setIsTotpEnabled(true); // Update local status immediately
+				onUpdate();
+			} else {
+				setTotpStatus({ type: "error", message: "Invalid Code. Try again." });
+			}
+		} catch (err) {
+			setTotpStatus({ type: "error", message: "Verification failed." });
+		} finally {
+			setLoadingTotp(false);
+		}
+	};
+
+	const getQrImageSrc = (code) => {
+		if (!code) return "";
+		let src = code;
+		if (src.indexOf("%") > -1) {
+			try {
+				src = decodeURIComponent(src);
+			} catch (e) {}
+		}
+		if (src.startsWith("data:") || src.startsWith("http")) {
+			return src;
+		}
+		return `data:image/png;base64,${src}`;
+	};
+
+	return (
+		<div className="space-y-6">
+			<h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+				User Panel
+			</h2>
+
+			<div className="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm">
+				<div className="flex items-center gap-4 mb-4">
+					<div className="p-3 bg-indigo-50 dark:bg-indigo-900/30 rounded-xl text-indigo-600 dark:text-indigo-400">
+						<UserIcon size={24} />
+					</div>
+					<div>
+						<h3 className="text-lg font-bold text-gray-900 dark:text-white">
+							Profile Details
+						</h3>
+						<p className="text-sm text-gray-500 dark:text-gray-400">
+							Your account information
+						</p>
+					</div>
+				</div>
+				<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+					{/* Removed Username Field */}
+					<div>
+						<label className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+							Status
+						</label>
+						<span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
+							Active
+						</span>
+					</div>
+					<div>
+						<label className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+							TOTP
+						</label>
+						<span
+							className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+								isTotpEnabled
+									? "bg-green-100 text-green-800"
+									: "bg-gray-100 text-gray-800"
+							}`}
+						>
+							{isTotpEnabled ? "Enabled" : "Disabled"}
+						</span>
+					</div>
+				</div>
+			</div>
+
+			<div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+				<div className="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm">
+					<div className="flex items-center gap-4 mb-4">
+						<div className="p-3 bg-green-50 dark:bg-green-900/30 rounded-xl text-green-600 dark:text-green-400">
+							<Wallet size={24} />
+						</div>
+						<div>
+							<h3 className="text-lg font-bold text-gray-900 dark:text-white">
+								Wallet
+							</h3>
+							<p className="text-sm text-gray-500 dark:text-gray-400">
+								Top up your balance
+							</p>
+						</div>
+					</div>
+
+					<form onSubmit={handleAddBalance} className="space-y-4">
+						<InputField
+							label="Amount ($)"
+							icon={DollarSign}
+							type="number"
+							placeholder="0.00"
+							value={amount}
+							onChange={(e) => setAmount(e.target.value)}
+							min="1"
+						/>
+						<Alert
+							type={balanceStatus && balanceStatus.type}
+							message={balanceStatus && balanceStatus.message}
+						/>
+						<Button type="submit" isLoading={loadingBalance}>
+							Add Balance
+						</Button>
+					</form>
+				</div>
+
+				<div className="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm">
+					<div className="flex items-center gap-4 mb-4">
+						<div
+							className={`p-3 rounded-xl ${
+								isTotpEnabled
+									? "bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400"
+									: "bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400"
+							}`}
+						>
+							<ShieldCheck size={24} />
+						</div>
+						<div>
+							<h3 className="text-lg font-bold text-gray-900 dark:text-white">
+								Security
+							</h3>
+							<p className="text-sm text-gray-500 dark:text-gray-400">
+								Two-Factor Authentication
+							</p>
+						</div>
+					</div>
+
+					<div className="space-y-4">
+						{isTotpEnabled ? (
+							<div className="flex flex-col items-center justify-center py-6 text-center space-y-3">
+								<div className="p-4 bg-green-100 dark:bg-green-900/20 rounded-full">
+									<CheckCircle
+										size={48}
+										className="text-green-600 dark:text-green-400"
+									/>
+								</div>
+								<div>
+									<h4 className="font-semibold text-gray-900 dark:text-white">
+										TOTP is Active
+									</h4>
+									<p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+										Your account is secured with two-factor authentication.
+									</p>
+								</div>
+							</div>
+						) : (
+							<>
+								{!qrCode ? (
+									<>
+										<p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
+											Protect your account by enabling Time-based One-Time
+											Password (TOTP) using Google Authenticator or Authy.
+										</p>
+										<Button
+											variant="secondary"
+											onClick={handleInitTotp}
+											isLoading={loadingTotp}
+										>
+											Enable TOTP
+										</Button>
+									</>
+								) : (
+									<div className="space-y-4 animate-fade-in">
+										<div className="flex justify-center p-4 bg-white rounded-xl border border-gray-200">
+											<img
+												src={getQrImageSrc(qrCode)}
+												alt="TOTP QR Code"
+												className="w-40 h-40 object-contain"
+											/>
+										</div>
+										<p className="text-xs text-center text-gray-500">
+											Scan this code with your app
+										</p>
+
+										<form onSubmit={handleConfirmTotp} className="space-y-3">
+											<InputField
+												icon={Lock}
+												placeholder="Enter 6-digit code"
+												value={otpInput}
+												onChange={(e) => setOtpInput(e.target.value)}
+												className="text-center tracking-widest"
+												maxLength={6}
+											/>
+											<Button type="submit" isLoading={loadingTotp}>
+												Verify & Enable
+											</Button>
+										</form>
+									</div>
+								)}
+								<Alert
+									type={totpStatus && totpStatus.type}
+									message={totpStatus && totpStatus.message}
+								/>
+							</>
+						)}
+					</div>
+				</div>
+			</div>
+		</div>
+	);
+};
+
+const Dashboard = ({ user, token, onLogout, isDarkMode, toggleTheme }) => {
+	const [fullUser, setFullUser] = useState(user);
+	const [balance, setBalance] = useState(0);
+	const [totalAssets, setTotalAssets] = useState(0);
+	const [stocks, setStocks] = useState([]);
+	const [activeOrdersCount, setActiveOrdersCount] = useState(0);
+	const [loading, setLoading] = useState(true);
+	const [activeTab, setActiveTab] = useState("market");
+	const [tradeModal, setTradeModal] = useState({
+		isOpen: false,
+		type: "BUY",
+		stock: null,
+	});
+
+	const fetchData = async () => {
+		setLoading(true);
+		try {
+			let currentBalance = 0;
+
+			if (user && user.username) {
+				const userRes = await fetch(
+					`${API_BASE_URL}/user-panel/find-user/${user.username}`,
+					{
+						headers: { Authorization: `Bearer ${token}` },
+					},
+				);
+				if (userRes.ok) {
+					const userData = await userRes.json();
+					setFullUser(userData.object);
+				}
+			}
+
+			const balanceRes = await fetch(`${API_BASE_URL}/user-panel/get-balance`, {
+				headers: { Authorization: `Bearer ${token}` },
+			});
+			if (balanceRes.ok) {
+				const balanceData = await balanceRes.json();
+				currentBalance = balanceData.object || 0;
+				setBalance(currentBalance);
+			}
+
+			if (activeTab === "market") {
+				const stockRes = await fetch(`${API_BASE_URL}/stock/search`, {
+					headers: { Authorization: `Bearer ${token}` },
+				});
+				if (stockRes.ok) {
+					const stockData = await stockRes.json();
+					setStocks(stockData.object || []);
+				}
+			}
+
+			if (user && user.username) {
+				const ordersRes = await fetch(
+					`${API_BASE_URL}/order/userName/${user.username}`,
+					{
+						headers: { Authorization: `Bearer ${token}` },
+					},
+				);
+				if (ordersRes.ok) {
+					const ordersData = await ordersRes.json();
+					const orders = ordersData.object || [];
+					const activeCount = orders.filter(
+						(o) => o.status === "PENDING" || o.status === "PARTIALLY_FILLED",
+					).length;
+					setActiveOrdersCount(activeCount);
+				}
+			}
+
+			const portfolioRes = await fetch(
+				`${API_BASE_URL}/portfolio/get-portfolio`,
+				{
+					headers: { Authorization: `Bearer ${token}` },
+				},
+			);
+
+			if (portfolioRes.ok) {
+				const portData = await portfolioRes.json();
+				const portfolioObj = portData.object;
+				let stockValue = 0;
+
+				if (Array.isArray(portfolioObj)) {
+					stockValue = portfolioObj.reduce((acc, item) => {
+						const qty = item.quantity || 0;
+						const price = (item.stock && item.stock.currentPrice) || 0;
+						return acc + qty * price;
+					}, 0);
+				} else if (portfolioObj) {
+					const qty = portfolioObj.quantity || 0;
+					const price =
+						(portfolioObj.stock && portfolioObj.stock.currentPrice) || 0;
+					stockValue = qty * price;
+				}
+				setTotalAssets(currentBalance + stockValue);
+			} else {
+				setTotalAssets(currentBalance);
+			}
+		} catch (error) {
+			console.error("Fetch error", error);
+		} finally {
+			setLoading(false);
+		}
+	};
+
+	useEffect(() => {
+		fetchData();
+	}, [activeTab]);
+
+	return (
+		<div className="flex min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
+			{/* Sidebar */}
+			<div className="w-20 lg:w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col transition-all duration-300">
+				<div className="h-16 flex items-center justify-center lg:justify-start lg:px-6 border-b border-gray-100 dark:border-gray-700">
+					<div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white font-bold text-lg shadow-md shadow-indigo-200 dark:shadow-none">
+						P
+					</div>
+					<span className="hidden lg:block ml-3 font-bold text-gray-800 dark:text-white text-lg">
+						Portfolio
+					</span>
+				</div>
+
+				<nav className="p-4 space-y-2 flex-1">
+					<button
+						type="button"
+						onClick={() => setActiveTab("market")}
+						className={`w-full flex items-center p-3 rounded-xl transition-all ${
+							activeTab === "market"
+								? "bg-indigo-50 text-indigo-600 dark:bg-indigo-900/20 dark:text-indigo-400"
+								: "text-gray-500 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-700/50"
+						}`}
+					>
+						<LayoutDashboard size={20} />
+						<span className="hidden lg:block ml-3 font-medium">Market</span>
+					</button>
+					<button
+						type="button"
+						onClick={() => setActiveTab("portfolio")}
+						className={`w-full flex items-center p-3 rounded-xl transition-all ${
+							activeTab === "portfolio"
+								? "bg-indigo-50 text-indigo-600 dark:bg-indigo-900/20 dark:text-indigo-400"
+								: "text-gray-500 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-700/50"
+						}`}
+					>
+						<PieChart size={20} />
+						<span className="hidden lg:block ml-3 font-medium">Portfolio</span>
+					</button>
+					<button
+						type="button"
+						onClick={() => setActiveTab("settings")}
+						className={`w-full flex items-center p-3 rounded-xl transition-all ${
+							activeTab === "settings"
+								? "bg-indigo-50 text-indigo-600 dark:bg-indigo-900/20 dark:text-indigo-400"
+								: "text-gray-500 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-700/50"
+						}`}
+					>
+						<Settings size={20} />
+						<span className="hidden lg:block ml-3 font-medium">Settings</span>
+					</button>
+				</nav>
+
+				<div className="p-4 border-t border-gray-100 dark:border-gray-700 space-y-2">
+					<button
+						type="button"
+						onClick={toggleTheme}
+						className="w-full flex items-center p-3 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-xl transition-all"
+					>
+						{isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
+						<span className="hidden lg:block ml-3 font-medium">
+							{isDarkMode ? "Light Mode" : "Dark Mode"}
+						</span>
+					</button>
+					<button
+						type="button"
+						onClick={onLogout}
+						className="w-full flex items-center p-3 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-all"
+					>
+						<LogOut size={20} />
+						<span className="hidden lg:block ml-3 font-medium">Logout</span>
+					</button>
+				</div>
+			</div>
+
+			{/* Main Content */}
+			<div className="flex-1 flex flex-col overflow-hidden">
+				<header className="h-16 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between px-6 lg:px-8">
+					<div className="flex items-center bg-gray-100 dark:bg-gray-700 rounded-lg px-3 py-2 w-full max-w-sm">
+						<Search size={18} className="text-gray-400" />
+						<input
+							type="text"
+							placeholder="Search stocks..."
+							className="bg-transparent border-none outline-none text-sm ml-2 w-full text-gray-900 dark:text-white placeholder-gray-500"
+						/>
+					</div>
+					<div className="flex items-center gap-4">
+						<div className="flex items-center gap-3 pl-4 border-l border-gray-200 dark:border-gray-600">
+							<div className="text-right hidden md:block">
+								<div className="text-sm font-bold text-gray-900 dark:text-white">
+									{user && user.username}
+								</div>
+								<div className="text-xs text-gray-500 dark:text-gray-400">
+									{user && user.email ? user.email : "User"}
+								</div>
+							</div>
+							<div className="w-9 h-9 bg-gradient-to-tr from-indigo-500 to-purple-500 rounded-lg flex items-center justify-center text-white font-bold">
+								{user && user.username
+									? user.username.charAt(0).toUpperCase()
+									: "U"}
+							</div>
+						</div>
+					</div>
+				</header>
+
+				<main className="flex-1 overflow-y-auto p-6 lg:p-8">
+					<div className="max-w-7xl mx-auto space-y-8">
+						<div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+							<StatCard
+								title="Cash Balance"
+								value={`$${Number(balance).toLocaleString()}`}
+								icon={Wallet}
+								trend={0}
+							/>
+							<StatCard
+								title="Active Orders"
+								value={activeOrdersCount}
+								icon={LineChart}
+							/>
+							<StatCard
+								title="Total Assets"
+								value={`$${Number(totalAssets).toLocaleString()}`}
+								icon={DollarSign}
+								trend={0}
+							/>
+						</div>
+
+						{activeTab === "market" && (
+							<div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
+								<div className="p-6 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
+									<h2 className="text-lg font-bold text-gray-900 dark:text-white">
+										Market Overview
+									</h2>
+									<button
+										type="button"
+										onClick={fetchData}
+										className="text-indigo-600 dark:text-indigo-400 text-sm font-medium hover:underline flex items-center gap-1"
+									>
+										<RefreshCw size={14} /> Refresh
+									</button>
+								</div>
+								<div className="overflow-x-auto">
+									<table className="w-full text-left border-collapse">
+										<thead>
+											<tr className="bg-gray-50/50 dark:bg-gray-900/50 text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+												<th className="px-6 py-4 font-semibold">Symbol</th>
+												<th className="px-6 py-4 font-semibold">Sector</th>
+												<th className="px-6 py-4 font-semibold">Price</th>
+												<th className="px-6 py-4 font-semibold text-right">
+													Actions
+												</th>
+											</tr>
+										</thead>
+										<tbody className="divide-y divide-gray-100 dark:divide-gray-700">
+											{loading ? (
+												<tr>
+													<td
+														colSpan="4"
+														className="text-center py-8 text-gray-500"
+													>
+														Loading market data...
+													</td>
+												</tr>
+											) : stocks.length === 0 ? (
+												<tr>
+													<td
+														colSpan="4"
+														className="text-center py-8 text-gray-500"
+													>
+														No stocks found.
+													</td>
+												</tr>
+											) : (
+												stocks.map((stock) => (
+													<tr
+														key={stock.id}
+														className="hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors"
+													>
+														<td className="px-6 py-4">
+															<div className="font-bold text-gray-900 dark:text-white">
+																{stock.symbol}
+															</div>
+															<div className="text-xs text-gray-500">
+																{stock.companyName}
+															</div>
+														</td>
+														<td className="px-6 py-4 text-gray-600 dark:text-gray-300 text-sm">
+															{stock.sector || "N/A"}
+														</td>
+														<td className="px-6 py-4 font-mono font-medium text-gray-900 dark:text-white">
+															$
+															{stock.currentPrice
+																? stock.currentPrice.toFixed(2)
+																: "0.00"}
+														</td>
+														<td className="px-6 py-4 text-right space-x-2">
+															<button
+																type="button"
+																onClick={() =>
+																	setTradeModal({
+																		isOpen: true,
+																		type: "BUY",
+																		stock,
+																	})
+																}
+																className="px-3 py-1.5 rounded-lg bg-green-50 text-green-700 text-xs font-bold hover:bg-green-100 dark:bg-green-900/20 dark:text-green-400 dark:hover:bg-green-900/30 transition-colors"
+															>
+																Buy
+															</button>
+															<button
+																type="button"
+																onClick={() =>
+																	setTradeModal({
+																		isOpen: true,
+																		type: "SELL",
+																		stock,
+																	})
+																}
+																className="px-3 py-1.5 rounded-lg bg-red-50 text-red-700 text-xs font-bold hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/30 transition-colors"
+															>
+																Sell
+															</button>
+														</td>
+													</tr>
+												))
+											)}
+										</tbody>
+									</table>
+								</div>
+							</div>
+						)}
+
+						{activeTab === "settings" && (
+							<SettingsPanel
+								user={fullUser}
+								token={token}
+								onUpdate={fetchData}
+							/>
+						)}
+
+						{activeTab === "portfolio" && (
+							<div className="text-center py-20 text-gray-500 dark:text-gray-400">
+								<PieChart size={64} className="mx-auto mb-4 opacity-50" />
+								<h3 className="text-xl font-semibold mb-2">Portfolio View</h3>
+								<p>Holdings visualization coming soon.</p>
+							</div>
+						)}
+					</div>
+				</main>
+			</div>
+
+			{tradeModal.stock && (
+				<TradeModal
+					isOpen={tradeModal.isOpen}
+					onClose={() => setTradeModal({ ...tradeModal, isOpen: false })}
+					type={tradeModal.type}
+					stockSymbol={tradeModal.stock.symbol}
+					currentPrice={tradeModal.stock.currentPrice}
+					token={token}
+					username={user && user.username}
+					onTradeComplete={fetchData}
+				/>
+			)}
+		</div>
+	);
+};
+
+window.Dashboard = Dashboard;

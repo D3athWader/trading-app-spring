@@ -116,4 +116,10 @@ public class PortfolioService {
         portfolio.getQuantity(), portfolio.getAveragePricePaid());
     portfolioRepository.save(portfolio);
   }
+
+  public Optional<Portfolio> getPortfolio(String username) {
+    User user = userService.getUserByUsername(username).orElseThrow(
+        () -> new RuntimeException("User not found"));
+    return portfolioRepository.findByUser(user);
+  }
 }

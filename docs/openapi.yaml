@@ -6,6 +6,42 @@ servers:
 - url: http://localhost:8080
   description: Generated server url
 paths:
+  /totp/verify:
+    post:
+      tags:
+      - totp-controller
+      operationId: verifyOtp
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OtpVerifyRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseVoid"
+  /totp/setup:
+    post:
+      tags:
+      - totp-controller
+      operationId: setupOtp
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OtpVerifyRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseBoolean"
   /public/verify:
     post:
       tags:
@@ -59,7 +95,7 @@ paths:
           content:
             '*/*':
               schema:
-                $ref: "#/components/schemas/ApiResponseVoid"
+                $ref: "#/components/schemas/ApiResponseString"
   /portfolio/create-portfolio:
     post:
       tags:
@@ -162,6 +198,24 @@ paths:
             '*/*':
               schema:
                 $ref: "#/components/schemas/ApiResponseCompany"
+  /user-panel/totp-status:
+    get:
+      tags:
+      - user-controller
+      operationId: totpStatus
+      parameters:
+      - name: Authorization
+        in: header
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseBoolean"
   /user-panel/logout:
     get:
       tags:
@@ -228,6 +282,24 @@ paths:
             '*/*':
               schema:
                 $ref: "#/components/schemas/ApiResponseUserDTO"
+  /user-panel/enable-totp:
+    get:
+      tags:
+      - user-controller
+      operationId: enableTotp
+      parameters:
+      - name: Authorization
+        in: header
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseString"
   /user-panel/all-users:
     get:
       tags:
@@ -335,6 +407,24 @@ paths:
             '*/*':
               schema:
                 type: string
+  /portfolio/get-portfolio:
+    get:
+      tags:
+      - portfolio-controller
+      operationId: getPortfolio
+      parameters:
+      - name: Authorization
+        in: header
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponsePortfolio"
   /order/userName/{userName}:
     get:
       tags:
@@ -569,12 +659,16 @@ paths:
                 $ref: "#/components/schemas/ApiResponseVoid"
 components:
   schemas:
-    AuthRequest:
+    OtpVerifyRequest:
+      required:
+      - otp
+      - userId
       type: object
       properties:
-        username:
-          type: string
-        password:
+        userId:
+          type: integer
+          format: int64
+        otp:
           type: string
     ApiResponseVoid:
       type: object
@@ -583,6 +677,20 @@ components:
           type: string
         object:
           type: object
+    ApiResponseBoolean:
+      type: object
+      properties:
+        message:
+          type: string
+        object:
+          type: boolean
+    AuthRequest:
+      type: object
+      properties:
+        username:
+          type: string
+        password:
+          type: string
     User:
       type: object
       properties:
@@ -615,8 +723,19 @@ components:
           type: string
         resetToken:
           type: string
+        secret:
+          type: string
         verified:
           type: boolean
+        totpEnabled:
+          type: boolean
+    ApiResponseString:
+      type: object
+      properties:
+        message:
+          type: string
+        object:
+          type: string
     NewPortfolio:
       type: object
       properties:

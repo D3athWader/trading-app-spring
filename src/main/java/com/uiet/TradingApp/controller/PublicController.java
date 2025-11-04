@@ -68,7 +68,7 @@ public class PublicController {
   }
 
   @PostMapping("/login")
-  public ResponseEntity<ApiResponse<Void>>
+  public ResponseEntity<ApiResponse<String>>
   login(@RequestBody AuthRequest authRequest) {
     try {
       authenticationManager.authenticate(
@@ -76,8 +76,17 @@ public class PublicController {
                                                   authRequest.getPassword()));
       UserDetails userDetails =
           userDetailsService.loadUserByUsername(authRequest.getUsername());
-      String jwtToken = jwtUtil.generateToken(userDetails.getUsername());
-      return ResponseEntity.ok(new ApiResponse<>(jwtToken));
+      if (userService.ifTotpEnabled(authRequest.getUsername())) {
+        String tempToken =
+            jwtUtil.generateOtpVerificationToken(authRequest.getUsername());
+        Long userId =
+            userService.getUserIdFromUsername(authRequest.getUsername());
+        return ResponseEntity.ok(
+            new ApiResponse<>("User Id: " + userId, tempToken));
+      } else {
+        String jwtToken = jwtUtil.generateToken(userDetails.getUsername());
+        return ResponseEntity.ok(new ApiResponse<>(jwtToken));
+      }
 
     } catch (Exception e) {
       return ResponseEntity.status(HttpStatus.UNAUTHORIZED)

@@ -5,10 +5,12 @@ import com.uiet.TradingApp.DTO.NewPortfolio;
 import com.uiet.TradingApp.entity.Portfolio;
 import com.uiet.TradingApp.service.PortfolioService;
 import com.uiet.TradingApp.utils.JwtUtil;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -54,6 +56,23 @@ public class PortfolioController {
       log.error("ERROR: Failed to create portfolio for user {}", username);
       return new ResponseEntity<>(new ApiResponse<>(e.getMessage()),
                                   HttpStatus.BAD_REQUEST);
+    }
+  }
+
+  @GetMapping("/get-portfolio")
+  public ResponseEntity<ApiResponse<Portfolio>>
+  getPortfolio(@RequestHeader("Authorization") String authHeader) {
+    String token = authHeader.substring(7);
+    String username = jwtUtil.extractUsername(token);
+    Optional<Portfolio> portfolio = portfolioService.getPortfolio(username);
+    if (portfolio.isEmpty()) {
+      log.error("ERROR: Portfolio not found for user {}", username);
+      return new ResponseEntity<>(new ApiResponse<>("Portfolio not found"),
+                                  HttpStatus.NOT_FOUND);
+    } else {
+      log.info("INFO: Portfolio found for user {}", username);
+      return new ResponseEntity<>(new ApiResponse<>(portfolio.get()),
+                                  HttpStatus.OK);
     }
   }
 }

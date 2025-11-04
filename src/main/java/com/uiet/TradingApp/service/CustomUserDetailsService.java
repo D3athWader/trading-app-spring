@@ -28,4 +28,17 @@ public class CustomUserDetailsService implements UserDetailsService {
                    .toArray(String[] ::new))
         .build();
   }
+
+  public UserDetails loadUserByUserId(Long userId) {
+    User user = userRepository.findById(userId).orElseThrow(
+        () -> new UsernameNotFoundException("User not found: " + userId));
+    return org.springframework.security.core.userdetails.User.builder()
+        .username(user.getUserName())
+        .password(user.getPassword())
+        .roles(user.getRole()
+                   .stream()
+                   .map(i -> i.replace("ROLE_", ""))
+                   .toArray(String[] ::new))
+        .build();
+  }
 }

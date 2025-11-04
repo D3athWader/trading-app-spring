@@ -5,6 +5,7 @@ import com.uiet.TradingApp.DTO.UserDTO;
 import com.uiet.TradingApp.entity.User;
 import com.uiet.TradingApp.repository.UserRepository;
 import com.uiet.TradingApp.service.TempService;
+import com.uiet.TradingApp.service.TotpService;
 import com.uiet.TradingApp.service.UserService;
 import com.uiet.TradingApp.utils.JwtUtil;
 import java.math.BigDecimal;
@@ -28,15 +29,16 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class UserController {
 
-  @GetMapping("/hello")
-  public ResponseEntity<ApiResponse<Void>> helloController() {
-    return new ResponseEntity<>(new ApiResponse<>("Hello"), HttpStatus.OK);
-  }
-
   private final UserService userService;
   private final UserRepository userRepository;
   private final JwtUtil jwtUtil;
   private final TempService tempService;
+  private final TotpService totpService;
+
+  @GetMapping("/hello")
+  public ResponseEntity<ApiResponse<Void>> helloController() {
+    return new ResponseEntity<>(new ApiResponse<>("Hello"), HttpStatus.OK);
+  }
 
   @GetMapping("/find-user/{userName}")
   public ResponseEntity<ApiResponse<UserDTO>>
@@ -118,5 +120,32 @@ public class UserController {
       return ResponseEntity.status(HttpStatus.BAD_REQUEST)
           .body(new ApiResponse<>("Error in logout"));
     }
+  }
+
+  @GetMapping("/enable-totp")
+  public ResponseEntity<ApiResponse<String>>
+  enableTotp(@RequestHeader("Authorization") String authHeader) {
+    authHeader = authHeader.substring(7);
+    String username = jwtUtil.extractUsername(authHeader);
+    String secret = totpService.getSecret(username);
+    try {
+      String tempJwt = jwtUtil.generateOtpVerificationToken(username);
+      String qrCode = totpService.generateQrCode(username, secret);
+      return new ResponseEntity<>(new ApiResponse<>(qrCode, tempJwt),
+                                  HttpStatus.CREATED);
+    } catch (Exception e) {
+      return new ResponseEntity<>(
+          new ApiResponse<>("Error in generating QR code"),
+          HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  @GetMapping("/totp-status")
+  public ResponseEntity<ApiResponse<Boolean>>
+  totpStatus(@RequestHeader("Authorization") String authHeader) {
+    authHeader = authHeader.substring(7);
+    String username = jwtUtil.extractUsername(authHeader);
+    return new ResponseEntity<>(
+        new ApiResponse<>(userService.ifTotpEnabled(username)), HttpStatus.OK);
   }
 }

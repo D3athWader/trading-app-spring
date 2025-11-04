@@ -1,5 +1,6 @@
 package com.uiet.TradingApp.service;
 
+import com.uiet.TradingApp.entity.Portfolio;
 import com.uiet.TradingApp.entity.User;
 import com.uiet.TradingApp.repository.UserRepository;
 import java.math.BigDecimal;
@@ -108,5 +109,17 @@ public class UserService {
 
   public Optional<User> getUserById(Long id) {
     return userRepository.findById(id);
+  }
+
+  public boolean ifTotpEnabled(String username) {
+    User user = userRepository.findByUserName(username).orElseThrow(
+        () -> new RuntimeException("User not found"));
+    return user.isTotpEnabled();
+  }
+
+  public Long getUserIdFromUsername(String username) {
+    User user = userRepository.findByUserName(username).orElseThrow(
+        () -> new RuntimeException("User not found"));
+    return user.getId();
   }
 }
