@@ -53,6 +53,27 @@ public class JwtUtil {
         .compact();
   }
 
+  public String generateOtpVerificationToken(String userName) {
+    Map<String, Object> claims = new HashMap<>();
+    claims.put("purpose", "TOTP_CHALLENGE");
+    return createTempTokenForOtpVerification(userName, claims);
+  }
+
+  private String createTempTokenForOtpVerification(String subject,
+                                                   Map<String, Object> claims) {
+    return Jwts.builder()
+        .claims(claims)
+        .subject(subject)
+        .header()
+        .empty()
+        .add("typ", "JWT")
+        .and()
+        .issuedAt(new Date(System.currentTimeMillis()))
+        .expiration(new Date(System.currentTimeMillis() + 1000 * 60 * 3))
+        .signWith(getSigningKey())
+        .compact();
+  }
+
   private SecretKey getSigningKey() {
 
     return Keys.hmacShaKeyFor(secretKey.getBytes());
@@ -78,5 +99,10 @@ public class JwtUtil {
         .build()
         .parseSignedClaims(token)
         .getPayload();
+  }
+
+  public Object extractClaimsForOtp(String token) {
+    Claims claims = extractAllClaims(token);
+    return claims.get("purpose");
   }
 }

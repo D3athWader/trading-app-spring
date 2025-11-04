@@ -20,8 +20,7 @@ public class UserService {
 
   private final UserRepository userRepository;
 
-  private static final PasswordEncoder PASSWORD_ENCODER =
-      new BCryptPasswordEncoder();
+  private static final PasswordEncoder PASSWORD_ENCODER = new BCryptPasswordEncoder();
 
   @Transactional
   public void saveUser(User user) {
@@ -108,5 +107,11 @@ public class UserService {
 
   public Optional<User> getUserById(Long id) {
     return userRepository.findById(id);
+  }
+
+  public boolean ifTotpEnabled(String username) {
+    User user = userRepository.findByUserName(username).orElseThrow(
+        () -> new RuntimeException("User not found"));
+    return user.isTotpEnabled();
   }
 }

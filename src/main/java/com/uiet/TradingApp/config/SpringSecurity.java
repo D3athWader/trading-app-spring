@@ -1,6 +1,7 @@
 package com.uiet.TradingApp.config;
 
 import com.uiet.TradingApp.filter.JwtFilter;
+import com.uiet.TradingApp.filter.TotpFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -20,6 +21,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SpringSecurity {
 
   private final JwtFilter jwtFilter;
+  private final TotpFilter totpFilter;
 
   @Bean
   public SecurityFilterChain filterChain(HttpSecurity httpSecurity)
@@ -57,7 +59,7 @@ public class SpringSecurity {
         -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
     httpSecurity.addFilterBefore(jwtFilter,
                                  UsernamePasswordAuthenticationFilter.class);
-
+    httpSecurity.addFilterAfter(totpFilter, JwtFilter.class);
     return httpSecurity.build();
   }
 

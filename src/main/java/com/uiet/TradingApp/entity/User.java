@@ -35,4 +35,8 @@ public class User {
   private String verificationToken;
   @Column(nullable = false) private boolean isVerified;
   private String resetToken;
+  // TOTP
+  @Column(nullable = false, columnDefinition = "boolean default false")
+  private boolean isTotpEnabled;
+  private String secret;
 }

@@ -68,43 +68,44 @@ public class PublicController {
   }
 
   @PostMapping("/login")
-  public ResponseEntity<ApiResponse<Void>>
-  login(@RequestBody AuthRequest authRequest) {
+  public ResponseEntity<ApiResponse<String>> login(@RequestBody AuthRequest authRequest) {
     try {
       authenticationManager.authenticate(
           new UsernamePasswordAuthenticationToken(authRequest.getUsername(),
-                                                  authRequest.getPassword()));
-      UserDetails userDetails =
-          userDetailsService.loadUserByUsername(authRequest.getUsername());
-      String jwtToken = jwtUtil.generateToken(userDetails.getUsername());
-      return ResponseEntity.ok(new ApiResponse<>(jwtToken));
+              authRequest.getPassword()));
+      UserDetails userDetails = userDetailsService.loadUserByUsername(authRequest.getUsername());
+      if (userService.ifTotpEnabled(authRequest.getUsername())) {
+        String tempToken = jwtUtil.generateOtpVerificationToken(authRequest.getUsername());
+        return ResponseEntity.ok(new ApiResponse<>(
+            "Verify totp and use this temporary token", tempToken));
+      } else {
+        String jwtToken = jwtUtil.generateToken(userDetails.getUsername());
+        return ResponseEntity.ok(new ApiResponse<>(jwtToken));
+      }
 
     } catch (Exception e) {
       return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
           .body(new ApiResponse<>(ERROR_STRING +
-                                  "Login failed: " + e.getMessage()));
+              "Login failed: " + e.getMessage()));
     }
   }
 
   @Async
   @PostMapping("/verify")
-  public CompletableFuture<ResponseEntity<ApiResponse<Void>>>
-  verifyEmail(@RequestBody AuthRequest authRequest,
-              HttpServletRequest request) {
+  public CompletableFuture<ResponseEntity<ApiResponse<Void>>> verifyEmail(@RequestBody AuthRequest authRequest,
+      HttpServletRequest request) {
     String baseUrl = ServletUriComponentsBuilder.fromRequestUri(request)
-                         .replacePath(null)
-                         .build()
-                         .toUriString();
+        .replacePath(null)
+        .build()
+        .toUriString();
     return CompletableFuture.supplyAsync(() -> {
       try {
         authenticationManager.authenticate(
             new UsernamePasswordAuthenticationToken(authRequest.getUsername(),
-                                                    authRequest.getPassword()));
+                authRequest.getPassword()));
 
-        UserDetails userDetails =
-            userDetailsService.loadUserByUsername(authRequest.getUsername());
-        Optional<User> opUser =
-            userRepository.findByUserName(userDetails.getUsername());
+        UserDetails userDetails = userDetailsService.loadUserByUsername(authRequest.getUsername());
+        Optional<User> opUser = userRepository.findByUserName(userDetails.getUsername());
         if (opUser.isEmpty()) {
           return ResponseEntity.status(HttpStatus.NOT_FOUND)
               .body(new ApiResponse<>("User not found"));
@@ -113,11 +114,10 @@ public class PublicController {
         if (user.isVerified()) {
           return ResponseEntity.ok(new ApiResponse<>("Email already verified"));
         }
-        String verificationToken =
-            jwtUtil.generateEmailVerificationToken(user.getEmail());
+        String verificationToken = jwtUtil.generateEmailVerificationToken(user.getEmail());
         user.setVerificationToken(verificationToken);
         emailService.sendVerificationEmail(user.getEmail(), verificationToken,
-                                           baseUrl);
+            baseUrl);
         userService.saveUser(user);
         return ResponseEntity.ok(new ApiResponse<>("Verification email sent!"));
       } catch (Exception e) {
@@ -130,8 +130,7 @@ public class PublicController {
 
   @Transactional
   @GetMapping("/verification")
-  public ResponseEntity<ApiResponse<Void>>
-  verification(@RequestParam("token") String verificationToken) {
+  public ResponseEntity<ApiResponse<Void>> verification(@RequestParam("token") String verificationToken) {
     try {
 
       String emailString = jwtUtil.extractUsername(verificationToken);
@@ -144,7 +143,7 @@ public class PublicController {
       }
       if (opUser.get().isVerified()) {
         return new ResponseEntity<>(new ApiResponse<>("Email already verified"),
-                                    HttpStatus.FORBIDDEN);
+            HttpStatus.FORBIDDEN);
       }
       boolean validateToken = jwtUtil.validateToken(verificationToken);
       boolean equals = verificationTokenInDb.equals(verificationToken);
@@ -163,7 +162,7 @@ public class PublicController {
     } catch (Exception e) {
       log.error("Error in verification {}", e);
       return new ResponseEntity<>(new ApiResponse<>(ERROR_STRING + e),
-                                  HttpStatus.UNAUTHORIZED);
+          HttpStatus.UNAUTHORIZED);
     }
   }
 }
