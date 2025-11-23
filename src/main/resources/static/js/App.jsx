@@ -3,20 +3,21 @@ import ReactDOM from "react-dom/client";
 import { Sun, Moon } from "lucide-react";
 
 const { API_BASE_URL } = window.AppConfig;
+// Destructure components from window objects where they are attached
 const { LoginForm, SignupForm, VerificationHandler, TotpLogin } = window.Auth;
-const { Dashboard } = window;
+const Dashboard = window.Dashboard; // Ensure Dashboard is picked up
 
 const App = () => {
 	// Views: 'login' | 'signup' | 'verifying' | 'totp-login' | 'dashboard'
 	const [view, setView] = useState("login");
 	const [isDarkMode, setIsDarkMode] = useState(false);
 	const [currentUser, setCurrentUser] = useState(null);
-	const [token, setToken] = useState(null);
+	const [token, setToken] = useState(localStorage.getItem("authToken"));
 	const [verificationToken, setVerificationToken] = useState(null);
-	const [pendingTotp, setPendingTotp] = useState(null); // Store data for 2FA
+	const [pendingTotp, setPendingTotp] = useState(null);
 
 	useEffect(() => {
-		// 1. Check for Dark Mode
+		// 1. Check for Dark Mode preference
 		if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
 			setIsDarkMode(true);
 		}
@@ -28,8 +29,15 @@ const App = () => {
 			setVerificationToken(urlToken);
 			setView("verifying");
 			window.history.replaceState({}, document.title, window.location.pathname);
+		} else if (token) {
+			// If token exists in localStorage, try to restore session
+			// You might want to verify the token validity here with a simple API call
+			// For now, we assume it's valid and show dashboard.
+			// You can decode the token to get the username if needed,
+			// or fetch user details in Dashboard
+			setView("dashboard");
 		}
-	}, []);
+	}, [token]);
 
 	const handleLoginSuccess = (username, authToken) => {
 		setCurrentUser({ username });
@@ -68,6 +76,15 @@ const App = () => {
 
 	const toggleTheme = () => setIsDarkMode(!isDarkMode);
 
+	// Fallback if Dashboard component didn't load for some reason
+	if (view === "dashboard" && !Dashboard) {
+		return (
+			<div className="p-10 text-center">
+				Loading Dashboard Component... (Please refresh if stuck)
+			</div>
+		);
+	}
+
 	return (
 		<div className={isDarkMode ? "dark" : ""}>
 			<div
@@ -79,7 +96,7 @@ const App = () => {
 			>
 				{view === "dashboard" ? (
 					<Dashboard
-						user={currentUser}
+						user={currentUser || { username: "User" }} // Pass fallback user if restored from token
 						token={token}
 						onLogout={handleLogout}
 						isDarkMode={isDarkMode}

@@ -25,8 +25,11 @@ public class Portfolio {
   @Id @GeneratedValue(strategy = GenerationType.IDENTITY) private Long id;
   private Long quantity;
   private BigDecimal averagePricePaid;
-  @JsonBackReference @ManyToOne @JoinColumn(name = "user_id") private User user;
-  @JsonBackReference
+  @JsonBackReference(value = "user-portfolio")
+  @ManyToOne
+  @JoinColumn(name = "user_id")
+  private User user;
+  @JsonBackReference(value = "stock-portfolio")
   @ManyToOne
   @JoinColumn(name = "stock_id")
   private Stock stock;

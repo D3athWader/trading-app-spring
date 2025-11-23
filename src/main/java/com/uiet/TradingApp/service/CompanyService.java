@@ -8,6 +8,7 @@ import com.uiet.TradingApp.entity.User;
 import com.uiet.TradingApp.repository.CompanyRepository;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -79,12 +80,22 @@ public class CompanyService {
     user.setUserName("user-" + company.getName());
     user.setPassword("password");
     user.setEmail("user-" + company.getName() + "@company.com");
-    user.setRole(List.of("ROLE_USER", "ROLE_COMPANY"));
+    user.setRole(new ArrayList<>(List.of("USER", "COMPANY")));
     user.setCreateadAt(LocalDateTime.now());
     user.setCountry("Country");
     user.setStatus("Active");
     user.setVerified(true);
+    company.setUser(user);
     userService.createUser(user);
+    companyRepository.save(company);
     log.info("INFO: Creating user for company {}", company.getName());
+  }
+
+  public void addStocksToCompanyUser(Company company, Stock stock) {
+    Long userId = company.getUser().getId();
+    Long stockId = stock.getId();
+    NewPortfolio newPortfolio = new NewPortfolio(userId, stockId);
+    Portfolio portfolio = portfolioService.createEntry(newPortfolio);
+    portfolioService.newEntry(portfolio);
   }
 }

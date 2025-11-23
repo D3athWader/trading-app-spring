@@ -2,9 +2,11 @@ package com.uiet.TradingApp.controller;
 
 import com.uiet.TradingApp.DTO.ApiResponse;
 import com.uiet.TradingApp.DTO.NewPortfolio;
+import com.uiet.TradingApp.DTO.PortfolioDTO;
 import com.uiet.TradingApp.entity.Portfolio;
 import com.uiet.TradingApp.service.PortfolioService;
 import com.uiet.TradingApp.utils.JwtUtil;
+import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -60,19 +62,20 @@ public class PortfolioController {
   }
 
   @GetMapping("/get-portfolio")
-  public ResponseEntity<ApiResponse<Portfolio>>
+  public ResponseEntity<ApiResponse<List<PortfolioDTO>>>
   getPortfolio(@RequestHeader("Authorization") String authHeader) {
     String token = authHeader.substring(7);
     String username = jwtUtil.extractUsername(token);
-    Optional<Portfolio> portfolio = portfolioService.getPortfolio(username);
+    List<Portfolio> portfolio = portfolioService.getPortfolio(username);
     if (portfolio.isEmpty()) {
       log.error("ERROR: Portfolio not found for user {}", username);
       return new ResponseEntity<>(new ApiResponse<>("Portfolio not found"),
                                   HttpStatus.NOT_FOUND);
     } else {
       log.info("INFO: Portfolio found for user {}", username);
-      return new ResponseEntity<>(new ApiResponse<>(portfolio.get()),
-                                  HttpStatus.OK);
+      List<PortfolioDTO> dtoList =
+          portfolio.stream().map(portfolioService::createDTO).toList();
+      return new ResponseEntity<>(new ApiResponse<>(dtoList), HttpStatus.OK);
     }
   }
 }

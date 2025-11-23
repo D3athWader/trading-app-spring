@@ -97,18 +97,23 @@ public class StockService {
 
   public List<StockDTO> searchStocks(String companyName, String sector) {
     List<Stock> stocks;
-    if (!companyName.equals("null") && !sector.equals("null")) {
+    boolean hasCompanyName = companyName != null &&
+                             !companyName.equals("null") &&
+                             !companyName.trim().isEmpty();
+    boolean hasSector =
+        sector != null && !sector.equals("null") && !sector.trim().isEmpty();
+    if (hasCompanyName && hasSector) {
       stocks =
           stockRepository
               .findByCompany_NameContainingIgnoreCaseAndCompany_SectorIgnoreCase(
                   companyName, sector);
       log.info("INFO: Searching stocks by company name {} and sector {}",
                companyName, sector);
-    } else if (!companyName.equals("null")) {
+    } else if (hasCompanyName) {
       stocks =
           stockRepository.findByCompany_NameContainingIgnoreCase(companyName);
       log.info("INFO: Searching stocks by company name {}", companyName);
-    } else if (!sector.equals("null")) {
+    } else if (hasSector) {
       stocks = stockRepository.findByCompany_SectorIgnoreCase(sector);
       log.info("INFO: Searching stocks by sector {}", sector);
     } else {

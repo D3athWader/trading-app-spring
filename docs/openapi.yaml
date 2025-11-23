@@ -424,7 +424,7 @@ paths:
           content:
             '*/*':
               schema:
-                $ref: "#/components/schemas/ApiResponsePortfolio"
+                $ref: "#/components/schemas/ApiResponseListPortfolioDTO"
   /order/userName/{userName}:
     get:
       tags:
@@ -691,73 +691,14 @@ components:
           type: string
         password:
           type: string
-    User:
-      type: object
-      properties:
-        id:
-          type: integer
-          format: int64
-        userName:
-          type: string
-        password:
-          type: string
-        email:
-          type: string
-        role:
-          type: array
-          items:
-            type: string
-        createadAt:
-          type: string
-          format: date-time
-        lastActive:
-          type: string
-          format: date-time
-        balance:
-          type: number
-        country:
-          type: string
-        status:
-          type: string
-        verificationToken:
-          type: string
-        resetToken:
-          type: string
-        secret:
-          type: string
-        verified:
-          type: boolean
-        totpEnabled:
-          type: boolean
-    ApiResponseString:
-      type: object
-      properties:
-        message:
-          type: string
-        object:
-          type: string
-    NewPortfolio:
-      type: object
-      properties:
-        userId:
-          type: integer
-          format: int64
-        stockId:
-          type: integer
-          format: int64
-    ApiResponsePortfolio:
-      type: object
-      properties:
-        message:
-          type: string
-        object:
-          $ref: "#/components/schemas/Portfolio"
     Company:
       type: object
       properties:
         id:
           type: integer
           format: int64
+        user:
+          $ref: "#/components/schemas/User"
         name:
           type: string
         tickerSymbol:
@@ -823,6 +764,71 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/Portfolio"
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        userName:
+          type: string
+        password:
+          type: string
+        email:
+          type: string
+        role:
+          type: array
+          items:
+            type: string
+        createadAt:
+          type: string
+          format: date-time
+        lastActive:
+          type: string
+          format: date-time
+        balance:
+          type: number
+        country:
+          type: string
+        status:
+          type: string
+        verificationToken:
+          type: string
+        resetToken:
+          type: string
+        secret:
+          type: string
+        portfolio:
+          type: array
+          items:
+            $ref: "#/components/schemas/Portfolio"
+        verified:
+          type: boolean
+        totpEnabled:
+          type: boolean
+    ApiResponseString:
+      type: object
+      properties:
+        message:
+          type: string
+        object:
+          type: string
+    NewPortfolio:
+      type: object
+      properties:
+        userId:
+          type: integer
+          format: int64
+        stockId:
+          type: integer
+          format: int64
+    ApiResponsePortfolio:
+      type: object
+      properties:
+        message:
+          type: string
+        object:
+          $ref: "#/components/schemas/Portfolio"
     NewOrder:
       type: object
       properties:
@@ -941,6 +947,29 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/StockDTO"
+    ApiResponseListPortfolioDTO:
+      type: object
+      properties:
+        message:
+          type: string
+        object:
+          type: array
+          items:
+            $ref: "#/components/schemas/PortfolioDTO"
+    PortfolioDTO:
+      type: object
+      properties:
+        stockSymbol:
+          type: string
+        quantity:
+          type: integer
+          format: int64
+        avgPrice:
+          type: number
+        currentPrice:
+          type: number
+        totalValue:
+          type: number
     ApiResponseListOrder:
       type: object
       properties:

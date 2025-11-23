@@ -1,6 +1,7 @@
 package com.uiet.TradingApp.entity;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -48,9 +49,10 @@ public class Stock {
 
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "company_id")
-  @JsonBackReference
+  @JsonBackReference(value = "company-stock")
   private Company company;
   @OneToMany(mappedBy = "stock", cascade = CascadeType.ALL)
+  @JsonManagedReference(value = "stock-portfolio")
   private List<Portfolio> portfolio;
 
   public void setCompany(Company company) {

@@ -1,10 +1,10 @@
 package com.uiet.TradingApp.DTO;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
-import org.springframework.stereotype.Component;
 
-@Component
 @Data
+@AllArgsConstructor
 public class NewPortfolio {
   private Long userId;
   private Long stockId;

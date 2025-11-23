@@ -19,9 +19,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @Slf4j
-@RequestMapping("/admin/stock")
-
 @RequiredArgsConstructor
+@RequestMapping("/admin/stock")
 public class AdminStockController {
   private final StockService stockService;
   private final CompanyService companyService;
@@ -39,6 +38,7 @@ public class AdminStockController {
       log.info("INFO: Company updated successfully {}", company.getName());
       log.info("INFO: Stock created successfully {}", newStock.getSymbol());
 
+      companyService.addStocksToCompanyUser(company, stock);
       return new ResponseEntity<>(new ApiResponse<>(stock), HttpStatus.CREATED);
     } catch (Exception e) {
       log.error("{} Failed to create stock {}", ERROR_STRING,

@@ -33,11 +33,18 @@ const LoginForm = ({ onSwitchMode, onLoginSuccess, onTotpRequired }) => {
 			const data = await response.json();
 
 			if (response.ok) {
-				const token = data.object || data.token;
+				// Attempt to get token from object/token field first
+				let token = data.object || data.token;
 				const message = data.message || "";
 
 				// Check for "User id: <number>" in the message to detect TOTP requirement
 				const userIdMatch = message.match(/User id:\s*(\d+)/i);
+
+				// CRITICAL FIX: If backend sends token in 'message' field instead of 'object'
+				// (common issue with Java generic types), and it's NOT a TOTP challenge, use message as token.
+				if (!token && !userIdMatch && message && message.length > 20) {
+					token = message;
+				}
 
 				if (userIdMatch && token) {
 					const userId = userIdMatch[1];

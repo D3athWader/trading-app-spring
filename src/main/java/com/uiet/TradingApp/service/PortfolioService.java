@@ -1,10 +1,13 @@
 package com.uiet.TradingApp.service;
 
 import com.uiet.TradingApp.DTO.NewPortfolio;
+import com.uiet.TradingApp.DTO.PortfolioDTO;
 import com.uiet.TradingApp.entity.Portfolio;
 import com.uiet.TradingApp.entity.Stock;
 import com.uiet.TradingApp.entity.User;
 import com.uiet.TradingApp.repository.PortfolioRepository;
+import java.math.BigDecimal;
+import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -117,9 +120,20 @@ public class PortfolioService {
     portfolioRepository.save(portfolio);
   }
 
-  public Optional<Portfolio> getPortfolio(String username) {
+  public List<Portfolio> getPortfolio(String username) {
     User user = userService.getUserByUsername(username).orElseThrow(
         () -> new RuntimeException("User not found"));
     return portfolioRepository.findByUser(user);
+  }
+
+  public PortfolioDTO createDTO(Portfolio portfolio) {
+    return PortfolioDTO.builder()
+        .stockSymbol(portfolio.getStock().getSymbol())
+        .quantity(portfolio.getQuantity())
+        .avgPrice(portfolio.getAveragePricePaid())
+        .currentPrice(portfolio.getStock().getCurrentPrice())
+        .totalValue(portfolio.getStock().getCurrentPrice().multiply(
+            BigDecimal.valueOf(portfolio.getQuantity())))
+        .build();
   }
 }
