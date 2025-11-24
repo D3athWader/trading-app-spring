@@ -1,6 +1,7 @@
 // DONE: update stock price
 package com.uiet.TradingApp.service;
 
+import com.uiet.TradingApp.DTO.TradeDTO;
 import com.uiet.TradingApp.entity.Company;
 import com.uiet.TradingApp.entity.Stock;
 import com.uiet.TradingApp.entity.Trade;
@@ -8,8 +9,12 @@ import com.uiet.TradingApp.entity.User;
 import com.uiet.TradingApp.repository.TradeRepository;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,6 +28,7 @@ public class TradeService {
   private final PortfolioService portfolioService;
   private final StockService stockService;
   private final CompanyService companyService;
+  private final SimpMessagingTemplate messagingTemplate;
 
   @Transactional
   public void newEntry(Trade trade) {
@@ -32,6 +38,7 @@ public class TradeService {
     addStocks(trade);
     log.info("INFO: Creating new trade entry for symbol {}", trade.getStock());
     setPrices(trade);
+    broadcastTrade(trade);
   }
 
   public Trade newTrade(User buyer, User seller, Stock stock, Long quantity,
@@ -52,6 +59,36 @@ public class TradeService {
   public void deleteEntry(Trade trade) {
     log.info("INFO: Deleting trade entry for symbol {}", trade.getStock());
     tradeRepository.delete(trade);
+  }
+
+  public List<TradeDTO> getTradesForUser(String username) {
+    User user = userService.getUserByUsername(username).orElseThrow(
+        () -> new RuntimeException("User not found"));
+    List<Trade> trades = tradeRepository.findByUser(user);
+    return trades.stream().map(this::convertToDTO).toList();
+  }
+
+  private void broadcastTrade(Trade trade) {
+    try {
+      TradeDTO dto = convertToDTO(trade);
+      // Sending to public topic
+      messagingTemplate.convertAndSend("/topic/trades", dto);
+      log.info("INFO: Broadcasted trade for {}", trade.getStock().getSymbol());
+    } catch (Exception e) {
+      log.error("ERROR: Failed to broadcast trade", e);
+    }
+  }
+
+  private TradeDTO convertToDTO(Trade trade) {
+    return TradeDTO.builder()
+        .id(trade.getId())
+        .stockSymbol(trade.getStock().getSymbol())
+        .quantity(trade.getQuantity())
+        .price(trade.getPrice())
+        .timestamp(trade.getTimestamp())
+        .buyerUsername(trade.getBuyer().getUserName())
+        .sellerUsername(trade.getSeller().getUserName())
+        .build();
   }
 
   private void sendBalance(Trade trade) {

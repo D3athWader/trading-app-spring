@@ -47,8 +47,8 @@ public class OrderService {
   @Transactional
   public void placeBuyOrder(Order order) {
     log.info("Trying to place buy order");
-    BigDecimal orderValue = order.getStock().getCurrentPrice().multiply(
-        BigDecimal.valueOf(order.getQuantity()));
+    BigDecimal orderValue =
+        order.getPrice().multiply(BigDecimal.valueOf(order.getQuantity()));
     BigDecimal userBalance =
         userService.getUserBalance(order.getUser().getUserName());
     log.info("User balance: {}, Order value: {}", userBalance, orderValue);
@@ -58,7 +58,6 @@ public class OrderService {
     order.setType(OrderType.BUY);
     order.setStatus(OrderStatus.PENDING);
     order.setTimestamp(LocalDateTime.now());
-    order.setPrice(order.getStock().getCurrentPrice());
     userService.deductBalance(order.getUser(), orderValue);
     log.info("INFO: Placing buy order for {}", order.getStock().getSymbol());
     orderRepository.save(order);

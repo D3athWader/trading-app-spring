@@ -17,16 +17,14 @@ public class WebSocketSecurityConfig {
   AuthorizationManager<Message<?>> messageAuthorizationManager(
       MessageMatcherDelegatingAuthorizationManager.Builder messages) {
 
-    messages.simpDestMatchers("/app/admin/**")
-        .hasRole("ADMIN")
-        .simpDestMatchers("/app/user/**")
-        .hasRole("USER")
-        .simpSubscribeDestMatchers("/topic/admin/**")
-        .hasRole("ADMIN")
+    messages.nullDestMatcher()
+        .permitAll()
         .simpSubscribeDestMatchers("/topic/**")
+        .permitAll()
+        .simpDestMatchers("/app/**")
         .authenticated()
         .anyMessage()
-        .authenticated();
+        .permitAll();
 
     return messages.build();
   }

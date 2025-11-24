@@ -47,7 +47,7 @@ public class SpringSecurity {
                    .requestMatchers("/public/**")
                    .permitAll()
                    .requestMatchers("/ws/**")
-                   .hasAnyAuthority(isUser, isAdmin, isCompany)
+                   .permitAll()
                    .requestMatchers("/portfolio/**")
                    .hasAnyAuthority(isUser, isCompany, isAdmin)
                    .requestMatchers("/portfolio/new-portfolio")

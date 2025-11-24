@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   LayoutDashboard,
   LineChart,
@@ -25,10 +25,57 @@ import {
   History,
   ShoppingCart,
   XCircle,
+  Activity,
+  ArrowUpRight,
+  ArrowDownLeft,
+  Zap,
+  Wifi,
+  WifiOff,
 } from "lucide-react";
 
-const { API_BASE_URL } = window.AppConfig;
-const { Button, Alert, StatCard, InputField } = window.UI;
+// CRITICAL FIX: Robustly handle AppConfig
+const AppConfig = window.AppConfig || { API_BASE_URL: "" };
+const { API_BASE_URL } = AppConfig;
+
+// SAFELY destructure window.UI
+const UI = window.UI || {};
+const Button =
+  UI.Button ||
+  (({ children, ...props }) => <button {...props}>{children}</button>);
+const Alert = UI.Alert || (() => null);
+const StatCard = UI.StatCard || (() => <div />);
+const InputField = UI.InputField || (({ ...props }) => <input {...props} />);
+
+// --- Utility Functions ---
+
+const formatDateTime = (timestamp, onlyTime = false) => {
+  if (!timestamp) return "--";
+  try {
+    let date;
+    if (Array.isArray(timestamp)) {
+      date = new Date(
+        timestamp[0],
+        timestamp[1] - 1,
+        timestamp[2],
+        timestamp[3],
+        timestamp[4],
+        timestamp[5] || 0,
+      );
+    } else {
+      date = new Date(timestamp);
+    }
+
+    if (isNaN(date.getTime())) return "Invalid Date";
+
+    if (onlyTime) {
+      return date.toLocaleTimeString([], { hour12: false });
+    }
+    return date.toLocaleString();
+  } catch (e) {
+    console.error("Date parsing error", e);
+    return "--";
+  }
+};
 
 // --- Helper Components ---
 
@@ -43,27 +90,20 @@ const TradeModal = ({
   onTradeComplete,
 }) => {
   const [quantity, setQuantity] = useState(1);
-  // Initialize custom price with current market price, allow it to be 0 if data is missing
   const [customPrice, setCustomPrice] = useState(currentPrice || 0);
   const [isLoading, setIsLoading] = useState(false);
   const [status, setStatus] = useState(null);
+  const [orderType, setOrderType] = useState(type || "BUY");
 
   useEffect(() => {
     setCustomPrice(currentPrice || 0);
-  }, [currentPrice, stockSymbol, isOpen]);
+    setOrderType(type || "BUY");
+  }, [currentPrice, stockSymbol, isOpen, type]);
 
   if (!isOpen) return null;
 
   const handleTrade = async (e) => {
-    // Prevent default if called from a form submit event
     if (e) e.preventDefault();
-
-    console.log("Initiating trade...", {
-      type,
-      stockSymbol,
-      quantity,
-      customPrice,
-    });
 
     if (quantity <= 0 || customPrice <= 0) {
       setStatus({ type: "error", message: "Invalid quantity or price." });
@@ -74,12 +114,12 @@ const TradeModal = ({
     setStatus(null);
     try {
       const endpoint =
-        type === "BUY" ? "/order/buy-order" : "/order/sell-order";
+        orderType === "BUY" ? "/order/buy-order" : "/order/sell-order";
       const payload = {
         stockSymbol,
         quantity: parseInt(quantity),
-        price: parseFloat(customPrice), // Use the custom price
-        type: type,
+        price: parseFloat(customPrice),
+        type: orderType,
         username: username,
       };
 
@@ -95,7 +135,7 @@ const TradeModal = ({
       if (response.ok) {
         setStatus({
           type: "success",
-          message: `Order to ${type} ${quantity} ${stockSymbol} at $${customPrice} placed!`,
+          message: `Order to ${orderType} ${quantity} ${stockSymbol} at $${customPrice} placed!`,
         });
         setTimeout(() => {
           onTradeComplete();
@@ -117,9 +157,8 @@ const TradeModal = ({
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-      <div className="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-sm p-6 shadow-2xl animate-fade-in relative">
-        {/* Close button for accessibility */}
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fade-in">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-sm p-6 shadow-2xl relative transition-all">
         <button
           onClick={onClose}
           className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
@@ -127,12 +166,39 @@ const TradeModal = ({
           <XCircle size={20} />
         </button>
 
-        <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">
-          {type === "BUY" ? "Buy" : "Sell"} {stockSymbol}
+        <div className="flex p-1 mb-6 bg-gray-100 dark:bg-gray-700 rounded-xl">
+          <button
+            type="button"
+            onClick={() => setOrderType("BUY")}
+            className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all duration-200 ${
+              orderType === "BUY"
+                ? "bg-white dark:bg-gray-600 text-green-600 dark:text-green-400 shadow-sm scale-105"
+                : "text-gray-500 dark:text-gray-400 hover:text-gray-700"
+            }`}
+          >
+            Buy
+          </button>
+          <button
+            type="button"
+            onClick={() => setOrderType("SELL")}
+            className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all duration-200 ${
+              orderType === "SELL"
+                ? "bg-white dark:bg-gray-600 text-red-600 dark:text-red-400 shadow-sm scale-105"
+                : "text-gray-500 dark:text-gray-400 hover:text-gray-700"
+            }`}
+          >
+            Sell
+          </button>
+        </div>
+
+        <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4 text-center">
+          {orderType === "BUY" ? "Buy" : "Sell"}{" "}
+          <span className="text-indigo-600 dark:text-indigo-400">
+            {stockSymbol}
+          </span>
         </h3>
 
         <div className="space-y-4 mb-6">
-          {/* Price Input Field */}
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Order Price ($)
@@ -151,7 +217,6 @@ const TradeModal = ({
             </p>
           </div>
 
-          {/* Quantity Input */}
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Quantity
@@ -199,12 +264,12 @@ const TradeModal = ({
             Cancel
           </Button>
           <Button
-            variant={type === "BUY" ? "primary" : "danger"}
+            variant={orderType === "BUY" ? "primary" : "danger"}
             className="flex-1"
             isLoading={isLoading}
             onClick={handleTrade}
           >
-            Confirm {type}
+            Confirm {orderType}
           </Button>
         </div>
       </div>
@@ -212,6 +277,213 @@ const TradeModal = ({
   );
 };
 
+const TradesList = ({ user, token }) => {
+  const [historyTrades, setHistoryTrades] = useState([]);
+  const [loadingHistory, setLoadingHistory] = useState(true);
+
+  useEffect(() => {
+    const fetchHistory = async () => {
+      if (!token) return;
+      try {
+        const res = await fetch(`${API_BASE_URL}/trade/history`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setHistoryTrades(data.object || []);
+        }
+      } catch (e) {
+        console.error("Failed to fetch trade history", e);
+      } finally {
+        setLoadingHistory(false);
+      }
+    };
+    fetchHistory();
+  }, [token]);
+
+  return (
+    <div className="h-full flex flex-col">
+      {loadingHistory ? (
+        <div className="flex items-center justify-center flex-1">
+          <RefreshCw size={24} className="animate-spin text-gray-400" />
+        </div>
+      ) : historyTrades.length === 0 ? (
+        <div className="p-8 text-center text-gray-500 dark:text-gray-400 flex-1">
+          No personal trades found.
+        </div>
+      ) : (
+        <div className="overflow-auto flex-1">
+          <table className="w-full text-left">
+            <thead className="bg-gray-50 dark:bg-gray-900/50 sticky top-0 backdrop-blur-sm">
+              <tr className="text-xs uppercase text-gray-500 dark:text-gray-400">
+                <th className="px-6 py-3">Date</th>
+                <th className="px-6 py-3">Action</th>
+                <th className="px-6 py-3">Symbol</th>
+                <th className="px-6 py-3 text-right">Price</th>
+                <th className="px-6 py-3 text-right">Total</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
+              {historyTrades.map((trade) => {
+                const isBuyer = trade.buyerUsername === user?.username;
+                return (
+                  <tr
+                    key={trade.id}
+                    className="hover:bg-gray-50 dark:hover:bg-gray-700/20"
+                  >
+                    <td className="px-6 py-3 text-xs text-gray-500 whitespace-nowrap">
+                      {formatDateTime(trade.timestamp)}
+                    </td>
+                    <td className="px-6 py-3">
+                      <span
+                        className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-bold ${
+                          isBuyer
+                            ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
+                            : "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400"
+                        }`}
+                      >
+                        {isBuyer ? (
+                          <ArrowDownLeft size={12} />
+                        ) : (
+                          <ArrowUpRight size={12} />
+                        )}
+                        {isBuyer ? "BOUGHT" : "SOLD"}
+                      </span>
+                    </td>
+                    <td className="px-6 py-3 font-bold text-gray-900 dark:text-white">
+                      {trade.stockSymbol}
+                    </td>
+                    <td className="px-6 py-3 text-right text-gray-600 dark:text-gray-300">
+                      ${trade.price?.toFixed(2)}
+                    </td>
+                    <td className="px-6 py-3 text-right font-bold text-gray-900 dark:text-white">
+                      ${(trade.price * trade.quantity).toFixed(2)}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// --- Reusable Live Market Widget ---
+const LiveMarketWidget = ({ liveTrades, connectionStatus }) => {
+  return (
+    <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden flex flex-col h-full min-h-[400px]">
+      <div className="p-6 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between bg-white dark:bg-gray-800 sticky top-0 z-10">
+        <div className="flex items-center gap-3">
+          <h3 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
+            <Activity size={20} className="text-green-500" /> Live Feed
+          </h3>
+          {/* Connection Status Indicator */}
+          {connectionStatus === "connected" ? (
+            <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-100 text-green-700 text-xs font-medium dark:bg-green-900/30 dark:text-green-400">
+              <Wifi size={12} /> Live
+            </span>
+          ) : (
+            <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-red-100 text-red-700 text-xs font-medium dark:bg-red-900/30 dark:text-red-400">
+              <WifiOff size={12} /> Disconnected
+            </span>
+          )}
+        </div>
+        {connectionStatus === "connected" && (
+          <span className="flex h-2 w-2 relative">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+          </span>
+        )}
+      </div>
+      <div className="overflow-auto flex-1 relative">
+        {liveTrades.length === 0 ? (
+          <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-400">
+            <RefreshCw
+              size={32}
+              className={`mb-2 opacity-50 ${
+                connectionStatus === "connected" ? "animate-spin" : ""
+              }`}
+            />
+            <p>
+              {connectionStatus === "connected"
+                ? "Waiting for trades..."
+                : "Connecting to market..."}
+            </p>
+          </div>
+        ) : (
+          <table className="w-full text-left">
+            <thead className="bg-gray-50 dark:bg-gray-900/50 sticky top-0 backdrop-blur-sm z-10">
+              <tr className="text-xs uppercase text-gray-500 dark:text-gray-400">
+                <th className="px-6 py-3">Time</th>
+                <th className="px-6 py-3">Symbol</th>
+                <th className="px-6 py-3 text-right">Price</th>
+                <th className="px-6 py-3 text-right">Qty</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
+              {liveTrades.map((trade, idx) => (
+                <tr
+                  key={trade.id || idx}
+                  className="animate-fade-in hover:bg-gray-50 dark:hover:bg-gray-700/20 transition-colors"
+                >
+                  <td className="px-6 py-3 text-sm text-gray-500 font-mono whitespace-nowrap">
+                    {formatDateTime(trade.timestamp, true)}
+                  </td>
+                  <td className="px-6 py-3 font-bold text-gray-900 dark:text-white">
+                    {trade.stockSymbol}
+                  </td>
+                  <td className="px-6 py-3 text-right font-medium text-indigo-600 dark:text-indigo-400">
+                    ${trade.price?.toFixed(2)}
+                  </td>
+                  <td className="px-6 py-3 text-right text-gray-600 dark:text-gray-300">
+                    {trade.quantity}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// --- Floating Theme Button ---
+const FloatingThemeToggle = ({ isDarkMode, toggleTheme }) => {
+  return (
+    <button
+      onClick={toggleTheme}
+      className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full bg-indigo-600 dark:bg-indigo-500 text-white shadow-xl hover:shadow-2xl hover:scale-110 active:scale-90 transition-all duration-300 ease-out group flex items-center justify-center"
+      aria-label="Toggle Theme"
+    >
+      <div className="relative w-6 h-6 flex items-center justify-center">
+        <Sun
+          className={`absolute transition-all duration-500 ${
+            isDarkMode
+              ? "opacity-0 rotate-90 scale-0"
+              : "opacity-100 rotate-0 scale-100"
+          }`}
+          size={24}
+        />
+        <Moon
+          className={`absolute transition-all duration-500 ${
+            isDarkMode
+              ? "opacity-100 rotate-0 scale-100"
+              : "opacity-0 -rotate-90 scale-0"
+          }`}
+          size={24}
+        />
+      </div>
+      <span className="absolute right-full mr-3 top-1/2 -translate-y-1/2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none shadow-lg">
+        {isDarkMode ? "Light Mode" : "Dark Mode"}
+      </span>
+    </button>
+  );
+};
+
+// --- Settings Panel (FIXED: Token Checks) ---
 const SettingsPanel = ({ user, token, onUpdate }) => {
   const [amount, setAmount] = useState("");
   const [balanceStatus, setBalanceStatus] = useState(null);
@@ -226,6 +498,7 @@ const SettingsPanel = ({ user, token, onUpdate }) => {
 
   useEffect(() => {
     const checkTotpStatus = async () => {
+      if (!token) return;
       try {
         const response = await fetch(`${API_BASE_URL}/user-panel/totp-status`, {
           method: "GET",
@@ -245,6 +518,10 @@ const SettingsPanel = ({ user, token, onUpdate }) => {
   const handleAddBalance = async (e) => {
     e.preventDefault();
     if (!amount || isNaN(amount) || amount <= 0) return;
+    if (!token) {
+      setBalanceStatus({ type: "error", message: "Authentication required." });
+      return;
+    }
 
     setLoadingBalance(true);
     setBalanceStatus(null);
@@ -275,6 +552,10 @@ const SettingsPanel = ({ user, token, onUpdate }) => {
   };
 
   const handleInitTotp = async () => {
+    if (!token) {
+      setTotpStatus({ type: "error", message: "Authentication required." });
+      return;
+    }
     setLoadingTotp(true);
     setTotpStatus(null);
     try {
@@ -356,7 +637,7 @@ const SettingsPanel = ({ user, token, onUpdate }) => {
 
   const getQrImageSrc = (code) => {
     if (!code) return "";
-    let src = code;
+    let src = String(code);
     if (src.indexOf("%") > -1) {
       try {
         src = decodeURIComponent(src);
@@ -367,6 +648,13 @@ const SettingsPanel = ({ user, token, onUpdate }) => {
     }
     return `data:image/png;base64,${src}`;
   };
+
+  // Safety check for user object to prevent white screen
+  if (!user) {
+    return (
+      <div className="text-gray-500 text-center p-10">Loading user data...</div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -433,7 +721,7 @@ const SettingsPanel = ({ user, token, onUpdate }) => {
           <form onSubmit={handleAddBalance} className="space-y-4">
             <InputField
               label="Amount ($)"
-              icon={DollarSign}
+              icon={DollarSign || undefined}
               type="number"
               placeholder="0.00"
               value={amount}
@@ -770,7 +1058,6 @@ const AdminPanel = ({ token }) => {
 
       <Alert type={status?.type} message={status?.message} />
 
-      {/* COMPANIES SECTION */}
       {activeSection === "companies" && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm">
@@ -838,7 +1125,6 @@ const AdminPanel = ({ token }) => {
         </div>
       )}
 
-      {/* STOCKS SECTION */}
       {activeSection === "stocks" && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-1 bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm h-fit">
@@ -930,7 +1216,6 @@ const AdminPanel = ({ token }) => {
         </div>
       )}
 
-      {/* USERS SECTION */}
       {activeSection === "users" && (
         <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
           <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
@@ -999,7 +1284,11 @@ const Dashboard = ({ user, token, onLogout, isDarkMode, toggleTheme }) => {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("market");
   const [userOrders, setUserOrders] = useState([]);
-  const [selectedStockForOrder, setSelectedStockForOrder] = useState(null);
+
+  // WebSocket State
+  const [liveTrades, setLiveTrades] = useState([]);
+  const [connectionStatus, setConnectionStatus] = useState("disconnected");
+  const stompClientRef = useRef(null);
 
   // Admin State
   const [isAdmin, setIsAdmin] = useState(false);
@@ -1022,11 +1311,96 @@ const Dashboard = ({ user, token, onLogout, isDarkMode, toggleTheme }) => {
         console.log("Not an admin");
       }
     };
-    checkAdminStatus();
-    fetchData();
-  }, []);
+    if (token) {
+      checkAdminStatus();
+      fetchData();
+    }
+  }, [token]);
+
+  // WebSocket Connection Logic
+  useEffect(() => {
+    let retryCount = 0;
+    const maxRetries = 10; // Try for 10 seconds
+
+    const connectWebSocket = () => {
+      // Check if libraries are available on window object
+      if (
+        typeof window.SockJS === "undefined" ||
+        typeof window.Stomp === "undefined"
+      ) {
+        console.warn("WebSocket libraries not ready yet. Retrying...");
+        if (retryCount < maxRetries) {
+          retryCount++;
+          setTimeout(connectWebSocket, 1000);
+        } else {
+          console.error("Failed to load WebSocket libraries.");
+        }
+        return;
+      }
+
+      // Prevent multiple connections
+      if (stompClientRef.current && stompClientRef.current.connected) return;
+
+      try {
+        const socket = new window.SockJS(`${API_BASE_URL}/ws`);
+        const stompClient = window.Stomp.over(socket);
+        stompClientRef.current = stompClient;
+
+        // Disable debug output
+        stompClient.debug = () => {};
+
+        stompClient.connect(
+          {
+            // Pass auth token in header
+            Authorization: `Bearer ${token}`,
+          },
+          (frame) => {
+            setConnectionStatus("connected");
+            console.log("Connected to WebSocket");
+
+            stompClient.subscribe("/topic/trades", (message) => {
+              try {
+                if (message.body) {
+                  const trade = JSON.parse(message.body);
+                  setLiveTrades((prev) => [trade, ...prev].slice(0, 20));
+                }
+              } catch (e) {
+                console.error("Error parsing trade message", e);
+              }
+            });
+          },
+          (error) => {
+            console.error("WebSocket Connection Error:", error);
+            setConnectionStatus("disconnected");
+            // Simple reconnection logic after 5s
+            setTimeout(connectWebSocket, 5000);
+          },
+        );
+      } catch (e) {
+        console.error("WebSocket init error:", e);
+        setConnectionStatus("error");
+      }
+    };
+
+    if (token) {
+      connectWebSocket();
+    }
+
+    return () => {
+      if (stompClientRef.current) {
+        try {
+          stompClientRef.current.disconnect(() => {
+            console.log("Disconnected from WebSocket");
+          });
+        } catch (e) {
+          // Ignore errors during disconnect
+        }
+      }
+    };
+  }, [token]); // Depend on token to reconnect if it changes
 
   const fetchData = async () => {
+    if (!token) return;
     setLoading(true);
     try {
       let currentBalance = 0;
@@ -1091,8 +1465,6 @@ const Dashboard = ({ user, token, onLogout, isDarkMode, toggleTheme }) => {
 
       if (portfolioRes.ok) {
         const portData = await portfolioRes.json();
-        // The response is now a List<PortfolioDTO> inside 'object'
-        // PortfolioDTO: { stockSymbol, quantity, avgPrice, currentPrice, totalValue }
         const portfolioList = portData.object || [];
         let stockValue = 0;
 
@@ -1102,7 +1474,6 @@ const Dashboard = ({ user, token, onLogout, isDarkMode, toggleTheme }) => {
             return acc + (item.totalValue || 0);
           }, 0);
         } else {
-          // Fallback if it's not an array (though it should be with new backend)
           setHoldings([]);
         }
         setTotalAssets(currentBalance + stockValue);
@@ -1140,10 +1511,11 @@ const Dashboard = ({ user, token, onLogout, isDarkMode, toggleTheme }) => {
   };
 
   return (
-    <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
+    <div className="flex h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300 overflow-hidden">
       {/* Sidebar */}
-      <div className="w-20 lg:w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col transition-all duration-300">
-        <div className="h-16 flex items-center justify-center lg:justify-start lg:px-6 border-b border-gray-100 dark:border-gray-700">
+      <div className="w-20 lg:w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col h-full transition-all duration-300 flex-shrink-0">
+        {/* ... sidebar content ... */}
+        <div className="h-16 flex items-center justify-center lg:justify-start lg:px-6 border-b border-gray-100 dark:border-gray-700 flex-shrink-0">
           <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white font-bold text-lg shadow-md shadow-indigo-200 dark:shadow-none">
             P
           </div>
@@ -1152,69 +1524,29 @@ const Dashboard = ({ user, token, onLogout, isDarkMode, toggleTheme }) => {
           </span>
         </div>
 
-        <nav className="p-4 space-y-2 flex-1">
-          <button
-            type="button"
-            onClick={() => setActiveTab("market")}
-            className={`w-full flex items-center p-3 rounded-xl transition-all ${
-              activeTab === "market"
-                ? "bg-indigo-50 text-indigo-600 dark:bg-indigo-900/20 dark:text-indigo-400"
-                : "text-gray-500 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-700/50"
-            }`}
-          >
-            <LayoutDashboard size={20} />
-            <span className="hidden lg:block ml-3 font-medium">Market</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab("portfolio")}
-            className={`w-full flex items-center p-3 rounded-xl transition-all ${
-              activeTab === "portfolio"
-                ? "bg-indigo-50 text-indigo-600 dark:bg-indigo-900/20 dark:text-indigo-400"
-                : "text-gray-500 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-700/50"
-            }`}
-          >
-            <PieChart size={20} />
-            <span className="hidden lg:block ml-3 font-medium">Portfolio</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab("orders")}
-            className={`w-full flex items-center p-3 rounded-xl transition-all ${
-              activeTab === "orders"
-                ? "bg-indigo-50 text-indigo-600 dark:bg-indigo-900/20 dark:text-indigo-400"
-                : "text-gray-500 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-700/50"
-            }`}
-          >
-            <ShoppingCart size={20} />
-            <span className="hidden lg:block ml-3 font-medium">Orders</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab("trades")}
-            className={`w-full flex items-center p-3 rounded-xl transition-all ${
-              activeTab === "trades"
-                ? "bg-indigo-50 text-indigo-600 dark:bg-indigo-900/20 dark:text-indigo-400"
-                : "text-gray-500 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-700/50"
-            }`}
-          >
-            <History size={20} />
-            <span className="hidden lg:block ml-3 font-medium">Trades</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab("settings")}
-            className={`w-full flex items-center p-3 rounded-xl transition-all ${
-              activeTab === "settings"
-                ? "bg-indigo-50 text-indigo-600 dark:bg-indigo-900/20 dark:text-indigo-400"
-                : "text-gray-500 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-700/50"
-            }`}
-          >
-            <Settings size={20} />
-            <span className="hidden lg:block ml-3 font-medium">Settings</span>
-          </button>
+        <nav className="p-4 space-y-2 flex-1 overflow-y-auto">
+          {["market", "portfolio", "orders", "trades", "settings"].map(
+            (tab) => (
+              <button
+                key={tab}
+                type="button"
+                onClick={() => setActiveTab(tab)}
+                className={`w-full flex items-center p-3 rounded-xl transition-all capitalize ${
+                  activeTab === tab
+                    ? "bg-indigo-50 text-indigo-600 dark:bg-indigo-900/20 dark:text-indigo-400"
+                    : "text-gray-500 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-700/50"
+                }`}
+              >
+                {tab === "market" && <LayoutDashboard size={20} />}
+                {tab === "portfolio" && <PieChart size={20} />}
+                {tab === "orders" && <ShoppingCart size={20} />}
+                {tab === "trades" && <History size={20} />}
+                {tab === "settings" && <Settings size={20} />}
+                <span className="hidden lg:block ml-3 font-medium">{tab}</span>
+              </button>
+            ),
+          )}
 
-          {/* Admin Tab - Only visible if user is Admin */}
           {isAdmin && (
             <button
               type="button"
@@ -1231,17 +1563,7 @@ const Dashboard = ({ user, token, onLogout, isDarkMode, toggleTheme }) => {
           )}
         </nav>
 
-        <div className="p-4 border-t border-gray-100 dark:border-gray-700 space-y-2">
-          <button
-            type="button"
-            onClick={toggleTheme}
-            className="w-full flex items-center p-3 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-xl transition-all"
-          >
-            {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
-            <span className="hidden lg:block ml-3 font-medium">
-              {isDarkMode ? "Light Mode" : "Dark Mode"}
-            </span>
-          </button>
+        <div className="p-4 border-t border-gray-100 dark:border-gray-700 space-y-2 flex-shrink-0">
           <button
             type="button"
             onClick={onLogout}
@@ -1253,9 +1575,12 @@ const Dashboard = ({ user, token, onLogout, isDarkMode, toggleTheme }) => {
         </div>
       </div>
 
+      {/* Floating Theme Toggle */}
+      <FloatingThemeToggle isDarkMode={isDarkMode} toggleTheme={toggleTheme} />
+
       {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <header className="h-16 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between px-6 lg:px-8">
+      <div className="flex-1 flex flex-col h-full overflow-hidden">
+        <header className="h-16 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between px-6 lg:px-8 flex-shrink-0">
           <div className="flex items-center bg-gray-100 dark:bg-gray-700 rounded-lg px-3 py-2 w-full max-w-sm">
             <Search size={18} className="text-gray-400" />
             <input
@@ -1284,7 +1609,8 @@ const Dashboard = ({ user, token, onLogout, isDarkMode, toggleTheme }) => {
         </header>
 
         <main className="flex-1 overflow-y-auto p-6 lg:p-8">
-          <div className="max-w-7xl mx-auto space-y-8">
+          <div className="max-w-7xl mx-auto space-y-8 pb-20">
+            {/* Stats Row */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <StatCard
                 title="Cash Balance"
@@ -1305,121 +1631,126 @@ const Dashboard = ({ user, token, onLogout, isDarkMode, toggleTheme }) => {
               />
             </div>
 
+            {/* --- VIEW LOGIC --- */}
+
             {activeTab === "market" && (
-              <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
-                <div className="p-6 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
-                  <h2 className="text-lg font-bold text-gray-900 dark:text-white">
-                    Market Overview
-                  </h2>
-                  <button
-                    type="button"
-                    onClick={fetchData}
-                    className="text-indigo-600 dark:text-indigo-400 text-sm font-medium hover:underline flex items-center gap-1"
-                  >
-                    <RefreshCw size={14} /> Refresh
-                  </button>
-                </div>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left border-collapse">
-                    <thead>
-                      <tr className="bg-gray-50/50 dark:bg-gray-900/50 text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                        <th className="px-6 py-4 font-semibold">Symbol</th>
-                        <th className="px-6 py-4 font-semibold">Sector</th>
-                        <th className="px-6 py-4 font-semibold">Price</th>
-                        <th className="px-6 py-4 font-semibold text-right">
-                          Actions
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-                      {loading ? (
-                        <tr>
-                          <td
-                            colSpan="4"
-                            className="text-center py-8 text-gray-500"
-                          >
-                            Loading market data...
-                          </td>
+              <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+                <div className="xl:col-span-2 bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden flex flex-col">
+                  {/* ... Market Table Header & Content ... */}
+                  <div className="p-6 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
+                    <h2 className="text-lg font-bold text-gray-900 dark:text-white">
+                      Market Overview
+                    </h2>
+                    <button
+                      type="button"
+                      onClick={fetchData}
+                      className="text-indigo-600 dark:text-indigo-400 text-sm font-medium hover:underline flex items-center gap-1"
+                    >
+                      <RefreshCw size={14} /> Refresh
+                    </button>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse">
+                      <thead>
+                        <tr className="bg-gray-50/50 dark:bg-gray-900/50 text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                          <th className="px-6 py-4 font-semibold">Symbol</th>
+                          <th className="px-6 py-4 font-semibold">Sector</th>
+                          <th className="px-6 py-4 font-semibold">Price</th>
+                          <th className="px-6 py-4 font-semibold text-right">
+                            Actions
+                          </th>
                         </tr>
-                      ) : stocks.length === 0 ? (
-                        <tr>
-                          <td
-                            colSpan="4"
-                            className="text-center py-8 text-gray-500"
-                          >
-                            No stocks found.
-                          </td>
-                        </tr>
-                      ) : (
-                        stocks.map((stock) => (
-                          <tr
-                            key={stock.id}
-                            className="hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors"
-                          >
-                            <td className="px-6 py-4">
-                              <div className="font-bold text-gray-900 dark:text-white">
-                                {stock.symbol}
-                              </div>
-                              <div className="text-xs text-gray-500">
-                                {stock.companyName}
-                              </div>
-                            </td>
-                            <td className="px-6 py-4 text-gray-600 dark:text-gray-300 text-sm">
-                              {stock.sector || "N/A"}
-                            </td>
-                            <td className="px-6 py-4 font-mono font-medium text-gray-900 dark:text-white">
-                              $
-                              {stock.currentPrice
-                                ? stock.currentPrice.toFixed(2)
-                                : "0.00"}
-                            </td>
-                            <td className="px-6 py-4 text-right space-x-2">
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  setTradeModal({
-                                    isOpen: true,
-                                    type: "BUY",
-                                    stock,
-                                  })
-                                }
-                                className="px-3 py-1.5 rounded-lg bg-green-50 text-green-700 text-xs font-bold hover:bg-green-100 dark:bg-green-900/20 dark:text-green-400 dark:hover:bg-green-900/30 transition-colors"
-                              >
-                                Buy
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  setTradeModal({
-                                    isOpen: true,
-                                    type: "SELL",
-                                    stock,
-                                  })
-                                }
-                                className="px-3 py-1.5 rounded-lg bg-red-50 text-red-700 text-xs font-bold hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/30 transition-colors"
-                              >
-                                Sell
-                              </button>
+                      </thead>
+                      <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
+                        {loading ? (
+                          <tr>
+                            <td
+                              colSpan="4"
+                              className="text-center py-8 text-gray-500"
+                            >
+                              Loading market data...
                             </td>
                           </tr>
-                        ))
-                      )}
-                    </tbody>
-                  </table>
+                        ) : stocks.length === 0 ? (
+                          <tr>
+                            <td
+                              colSpan="4"
+                              className="text-center py-8 text-gray-500"
+                            >
+                              No stocks found.
+                            </td>
+                          </tr>
+                        ) : (
+                          stocks.map((stock) => (
+                            <tr
+                              key={stock.id}
+                              className="hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors"
+                            >
+                              <td className="px-6 py-4">
+                                <div className="font-bold text-gray-900 dark:text-white">
+                                  {stock.symbol}
+                                </div>
+                                <div className="text-xs text-gray-500">
+                                  {stock.companyName}
+                                </div>
+                              </td>
+                              <td className="px-6 py-4 text-gray-600 dark:text-gray-300 text-sm">
+                                {stock.sector || "N/A"}
+                              </td>
+                              <td className="px-6 py-4 font-mono font-medium text-gray-900 dark:text-white">
+                                $
+                                {stock.currentPrice
+                                  ? stock.currentPrice.toFixed(2)
+                                  : "0.00"}
+                              </td>
+                              <td className="px-6 py-4 text-right space-x-2">
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setTradeModal({
+                                      isOpen: true,
+                                      type: "BUY",
+                                      stock,
+                                    })
+                                  }
+                                  className="px-3 py-1.5 rounded-lg bg-green-50 text-green-700 text-xs font-bold hover:bg-green-100 dark:bg-green-900/20 dark:text-green-400 dark:hover:bg-green-900/30 transition-colors"
+                                >
+                                  Buy
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setTradeModal({
+                                      isOpen: true,
+                                      type: "SELL",
+                                      stock,
+                                    })
+                                  }
+                                  className="px-3 py-1.5 rounded-lg bg-red-50 text-red-700 text-xs font-bold hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/30 transition-colors"
+                                >
+                                  Sell
+                                </button>
+                              </td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                <div className="xl:col-span-1">
+                  <LiveMarketWidget
+                    liveTrades={liveTrades}
+                    connectionStatus={connectionStatus}
+                  />
                 </div>
               </div>
             )}
 
-            {activeTab === "settings" && (
-              <SettingsPanel
-                user={fullUser}
-                token={token}
-                onUpdate={fetchData}
-              />
-            )}
-
             {activeTab === "portfolio" && (
               <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
+                {/* ... Portfolio Table ... */}
                 <div className="p-6 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
                   <h2 className="text-lg font-bold text-gray-900 dark:text-white">
                     My Portfolio
@@ -1465,7 +1796,6 @@ const Dashboard = ({ user, token, onLogout, isDarkMode, toggleTheme }) => {
                       </thead>
                       <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
                         {holdings.map((item, index) => {
-                          // With PortfolioDTO, properties are directly on the item object
                           const symbol = item.stockSymbol || "Unknown";
                           const currentPrice = item.currentPrice || 0;
                           const quantity = item.quantity || 0;
@@ -1526,149 +1856,173 @@ const Dashboard = ({ user, token, onLogout, isDarkMode, toggleTheme }) => {
             )}
 
             {activeTab === "orders" && (
-              <div className="space-y-6">
-                <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm">
-                  <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                      <ShoppingCart size={20} /> Place New Order
-                    </h3>
+              <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+                <div className="xl:col-span-2 space-y-6">
+                  {/* ... Place Order Buttons ... */}
+                  <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm">
+                    <div className="flex justify-between items-center mb-4">
+                      <h3 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                        <ShoppingCart size={20} /> Place New Order
+                      </h3>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {stocks.map((stock) => (
+                        <button
+                          key={stock.id}
+                          onClick={() =>
+                            setTradeModal({
+                              isOpen: true,
+                              type: "BUY",
+                              stock: stock,
+                              currentPrice: stock.currentPrice,
+                            })
+                          }
+                          className="p-4 rounded-xl border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 text-left transition-all group"
+                        >
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <div className="font-bold text-gray-900 dark:text-white">
+                                {stock.symbol}
+                              </div>
+                              <div className="text-xs text-gray-500">
+                                {stock.companyName}
+                              </div>
+                            </div>
+                            <div className="text-sm font-medium text-indigo-600 dark:text-indigo-400">
+                              ${stock.currentPrice?.toFixed(2)}
+                            </div>
+                          </div>
+                          <div className="mt-2 text-xs text-gray-400 group-hover:text-indigo-500 transition-colors">
+                            Click to Buy/Sell
+                          </div>
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {stocks.map((stock) => (
-                      <button
-                        key={stock.id}
-                        onClick={() =>
-                          setTradeModal({
-                            isOpen: true,
-                            type: "BUY",
-                            stockSymbol: stock.symbol,
-                            currentPrice: stock.currentPrice,
-                          })
-                        }
-                        className="p-4 rounded-xl border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 text-left transition-all group"
-                      >
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <div className="font-bold text-gray-900 dark:text-white">
-                              {stock.symbol}
-                            </div>
-                            <div className="text-xs text-gray-500">
-                              {stock.companyName}
-                            </div>
-                          </div>
-                          <div className="text-sm font-medium text-indigo-600 dark:text-indigo-400">
-                            ${stock.currentPrice?.toFixed(2)}
-                          </div>
-                        </div>
-                        <div className="mt-2 text-xs text-gray-400 group-hover:text-indigo-500 transition-colors">
-                          Click to Buy/Sell
-                        </div>
-                      </button>
-                    ))}
+
+                  {/* ... Order History ... */}
+                  <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
+                    <div className="p-6 border-b border-gray-100 dark:border-gray-700">
+                      <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+                        Order History
+                      </h3>
+                    </div>
+                    {userOrders.length === 0 ? (
+                      <div className="p-8 text-center text-gray-500">
+                        No orders found.
+                      </div>
+                    ) : (
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-left border-collapse">
+                          <thead>
+                            <tr className="bg-gray-50 dark:bg-gray-700 text-xs uppercase text-gray-500 dark:text-gray-300">
+                              <th className="px-6 py-4">Time</th>
+                              <th className="px-6 py-4">Type</th>
+                              <th className="px-6 py-4">Stock</th>
+                              <th className="px-6 py-4 text-right">Quantity</th>
+                              <th className="px-6 py-4 text-right">Price</th>
+                              <th className="px-6 py-4 text-center">Status</th>
+                              <th className="px-6 py-4 text-right">Action</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
+                            {userOrders.map((order) => (
+                              <tr
+                                key={order.id}
+                                className="hover:bg-gray-50 dark:hover:bg-gray-700/20"
+                              >
+                                <td className="px-6 py-4 text-sm text-gray-500">
+                                  {new Date(order.timestamp).toLocaleString()}
+                                </td>
+                                <td className="px-6 py-4">
+                                  <span
+                                    className={`px-2 py-1 rounded text-xs font-bold ${
+                                      order.type === "BUY"
+                                        ? "bg-green-100 text-green-800"
+                                        : "bg-red-100 text-red-800"
+                                    }`}
+                                  >
+                                    {order.type}
+                                  </span>
+                                </td>
+                                <td className="px-6 py-4 font-bold text-gray-900 dark:text-white">
+                                  {order.stock?.symbol}
+                                </td>
+                                <td className="px-6 py-4 text-right text-gray-600 dark:text-gray-300">
+                                  {order.quantity}
+                                </td>
+                                <td className="px-6 py-4 text-right text-gray-600 dark:text-gray-300">
+                                  ${order.price?.toFixed(2)}
+                                </td>
+                                <td className="px-6 py-4 text-center">
+                                  <span
+                                    className={`px-2 py-1 rounded text-xs ${
+                                      order.status === "FILLED"
+                                        ? "bg-blue-100 text-blue-800"
+                                        : order.status === "CANCELLED"
+                                          ? "bg-gray-100 text-gray-800"
+                                          : "bg-yellow-100 text-yellow-800"
+                                    }`}
+                                  >
+                                    {order.status}
+                                  </span>
+                                </td>
+                                <td className="px-6 py-4 text-right">
+                                  {(order.status === "PENDING" ||
+                                    order.status === "PARTIALLY_FILLED") && (
+                                    <button
+                                      onClick={() => cancelOrder(order.id)}
+                                      className="text-red-500 hover:text-red-700 text-xs font-bold uppercase"
+                                    >
+                                      Cancel
+                                    </button>
+                                  )}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
                   </div>
                 </div>
-
-                <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
-                  <div className="p-6 border-b border-gray-100 dark:border-gray-700">
-                    <h3 className="text-lg font-bold text-gray-900 dark:text-white">
-                      Order History
-                    </h3>
-                  </div>
-                  {userOrders.length === 0 ? (
-                    <div className="p-8 text-center text-gray-500">
-                      No orders found.
-                    </div>
-                  ) : (
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-left border-collapse">
-                        <thead>
-                          <tr className="bg-gray-50 dark:bg-gray-700 text-xs uppercase text-gray-500 dark:text-gray-300">
-                            <th className="px-6 py-4">Time</th>
-                            <th className="px-6 py-4">Type</th>
-                            <th className="px-6 py-4">Stock</th>
-                            <th className="px-6 py-4 text-right">Quantity</th>
-                            <th className="px-6 py-4 text-right">Price</th>
-                            <th className="px-6 py-4 text-center">Status</th>
-                            <th className="px-6 py-4 text-right">Action</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-                          {userOrders.map((order) => (
-                            <tr
-                              key={order.id}
-                              className="hover:bg-gray-50 dark:hover:bg-gray-700/20"
-                            >
-                              <td className="px-6 py-4 text-sm text-gray-500">
-                                {new Date(order.timestamp).toLocaleString()}
-                              </td>
-                              <td className="px-6 py-4">
-                                <span
-                                  className={`px-2 py-1 rounded text-xs font-bold ${
-                                    order.type === "BUY"
-                                      ? "bg-green-100 text-green-800"
-                                      : "bg-red-100 text-red-800"
-                                  }`}
-                                >
-                                  {order.type}
-                                </span>
-                              </td>
-                              <td className="px-6 py-4 font-bold text-gray-900 dark:text-white">
-                                {order.stock?.symbol}
-                              </td>
-                              <td className="px-6 py-4 text-right text-gray-600 dark:text-gray-300">
-                                {order.quantity}
-                              </td>
-                              <td className="px-6 py-4 text-right text-gray-600 dark:text-gray-300">
-                                ${order.price?.toFixed(2)}
-                              </td>
-                              <td className="px-6 py-4 text-center">
-                                <span
-                                  className={`px-2 py-1 rounded text-xs ${
-                                    order.status === "FILLED"
-                                      ? "bg-blue-100 text-blue-800"
-                                      : order.status === "CANCELLED"
-                                        ? "bg-gray-100 text-gray-800"
-                                        : "bg-yellow-100 text-yellow-800"
-                                  }`}
-                                >
-                                  {order.status}
-                                </span>
-                              </td>
-                              <td className="px-6 py-4 text-right">
-                                {(order.status === "PENDING" ||
-                                  order.status === "PARTIALLY_FILLED") && (
-                                  <button
-                                    onClick={() => cancelOrder(order.id)}
-                                    className="text-red-500 hover:text-red-700 text-xs font-bold uppercase"
-                                  >
-                                    Cancel
-                                  </button>
-                                )}
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
+                <div className="xl:col-span-1">
+                  <LiveMarketWidget
+                    liveTrades={liveTrades}
+                    connectionStatus={connectionStatus}
+                  />
                 </div>
               </div>
             )}
 
             {activeTab === "trades" && (
-              <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
-                <div className="p-6 border-b border-gray-100 dark:border-gray-700">
-                  <h3 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                    <History size={20} /> Trade History
-                  </h3>
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                {/* History Component */}
+                <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden h-full min-h-[600px] flex flex-col">
+                  <div className="p-6 border-b border-gray-100 dark:border-gray-700">
+                    <h3 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                      <History size={20} /> My Trade History
+                    </h3>
+                  </div>
+                  <div className="flex-1 overflow-hidden flex flex-col">
+                    <TradesList user={user} token={token} />
+                  </div>
                 </div>
-                <div className="p-8 text-center text-gray-500 dark:text-gray-400">
-                  <p>Trade history visualization coming soon.</p>
-                  <p className="text-xs mt-2">
-                    (Requires implementing /trade endpoints in backend)
-                  </p>
-                </div>
+
+                {/* Live Feed Component */}
+                <LiveMarketWidget
+                  liveTrades={liveTrades}
+                  connectionStatus={connectionStatus}
+                />
               </div>
+            )}
+
+            {activeTab === "settings" && (
+              <SettingsPanel
+                user={fullUser}
+                token={token}
+                onUpdate={fetchData}
+              />
             )}
 
             {activeTab === "admin" && isAdmin && <AdminPanel token={token} />}
@@ -1676,12 +2030,12 @@ const Dashboard = ({ user, token, onLogout, isDarkMode, toggleTheme }) => {
         </main>
       </div>
 
-      {tradeModal.stock && (
+      {(tradeModal.stock || tradeModal.stockSymbol) && (
         <TradeModal
           isOpen={tradeModal.isOpen}
           onClose={() => setTradeModal({ ...tradeModal, isOpen: false })}
           type={tradeModal.type}
-          stockSymbol={tradeModal.stock.symbol}
+          stockSymbol={tradeModal.stock?.symbol || tradeModal.stockSymbol}
           currentPrice={tradeModal.currentPrice}
           token={token}
           username={user && user.username}
