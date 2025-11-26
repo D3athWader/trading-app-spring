@@ -38,23 +38,16 @@ public class JwtFilter extends OncePerRequestFilter {
     String jwt = null;
     Object purpose = null;
     String path = request.getServletPath();
-    if (path.startsWith("/public/")) {
+    if (path.startsWith("/public/") || path.startsWith("/ws") ||
+        path.startsWith("/js/") || path.startsWith("/css/") ||
+        path.equals("/favicon.ico") || path.equals("/index.html") ||
+        path.equals("/")) {
       filterChain.doFilter(request, response);
       return;
     }
-    if (path.startsWith("/ws")) {
-      filterChain.doFilter(request, response);
-      return;
-    }
+
     log.info("Authorization header raw value: '{}'", authorizationHeader);
-    if (!path.startsWith("/public/") && !path.startsWith("/totp/")) {
-      log.info("Processing Request: {} | Auth Header: '{}'", path,
-               authorizationHeader);
-    }
-    if (path.startsWith("/totp/")) {
-      filterChain.doFilter(request, response);
-      return;
-    }
+
     if (authorizationHeader == null ||
         !authorizationHeader.startsWith("Bearer ")) {
       filterChain.doFilter(request, response);

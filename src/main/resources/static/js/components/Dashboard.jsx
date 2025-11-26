@@ -6,7 +6,6 @@ import {
   LogOut,
   Wallet,
   DollarSign,
-  Bell,
   Search,
   Plus,
   Minus,
@@ -16,6 +15,7 @@ import {
   Moon,
   ShieldCheck,
   User as UserIcon,
+  CircleUser,
   Lock,
   CheckCircle,
   Briefcase,
@@ -28,9 +28,10 @@ import {
   Activity,
   ArrowUpRight,
   ArrowDownLeft,
-  Zap,
   Wifi,
   WifiOff,
+  Zap,
+  BarChart3,
 } from "lucide-react";
 
 // CRITICAL FIX: Robustly handle AppConfig
@@ -166,13 +167,13 @@ const TradeModal = ({
           <XCircle size={20} />
         </button>
 
-        <div className="flex p-1 mb-6 bg-gray-100 dark:bg-gray-700 rounded-xl">
+        <div className="flex p-1 mb-6 bg-gray-100 dark:bg-gray-900/50 rounded-xl">
           <button
             type="button"
             onClick={() => setOrderType("BUY")}
             className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all duration-200 active:scale-95 ${
               orderType === "BUY"
-                ? "bg-white dark:bg-gray-600 text-green-600 dark:text-green-400 shadow-sm scale-105"
+                ? "bg-white dark:bg-gray-700 text-green-600 dark:text-green-400 shadow-sm scale-105"
                 : "text-gray-500 dark:text-gray-400 hover:text-gray-700"
             }`}
           >
@@ -183,7 +184,7 @@ const TradeModal = ({
             onClick={() => setOrderType("SELL")}
             className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all duration-200 active:scale-95 ${
               orderType === "SELL"
-                ? "bg-white dark:bg-gray-600 text-red-600 dark:text-red-400 shadow-sm scale-105"
+                ? "bg-white dark:bg-gray-700 text-red-600 dark:text-red-400 shadow-sm scale-105"
                 : "text-gray-500 dark:text-gray-400 hover:text-gray-700"
             }`}
           >
@@ -1293,6 +1294,12 @@ const Dashboard = ({ user, token, onLogout, isDarkMode, toggleTheme }) => {
   // Admin State
   const [isAdmin, setIsAdmin] = useState(false);
 
+  // Search State
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const searchRef = useRef(null);
+
   const [tradeModal, setTradeModal] = useState({
     isOpen: false,
     type: "BUY",
@@ -1395,6 +1402,20 @@ const Dashboard = ({ user, token, onLogout, isDarkMode, toggleTheme }) => {
       }
     };
   }, [token]); // Depend on token to reconnect if it changes
+
+  // Close search results on outside click
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (searchRef.current && !searchRef.current.contains(event.target)) {
+        setSearchResults([]);
+        setSearchQuery("");
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [searchRef]);
 
   const fetchData = async () => {
     if (!token) return;
@@ -1507,17 +1528,45 @@ const Dashboard = ({ user, token, onLogout, isDarkMode, toggleTheme }) => {
     }
   };
 
+  // Search Handler
+  const handleSearch = async (e) => {
+    const query = e.target.value;
+    setSearchQuery(query);
+
+    if (query.length < 2) {
+      setSearchResults([]);
+      return;
+    }
+
+    setIsSearching(true);
+    try {
+      const res = await fetch(`${API_BASE_URL}/stock/search?name=${query}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setSearchResults(data.object || []);
+      } else {
+        setSearchResults([]);
+      }
+    } catch (error) {
+      console.error("Search error", error);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
   return (
     <div className="flex h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300 overflow-hidden">
       {/* Sidebar */}
       <div className="w-20 lg:w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col h-full transition-all duration-300 flex-shrink-0">
         {/* ... sidebar content ... */}
         <div className="h-16 flex items-center justify-center lg:justify-start lg:px-6 border-b border-gray-100 dark:border-gray-700 flex-shrink-0">
-          <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white font-bold text-lg shadow-md shadow-indigo-200 dark:shadow-none">
-            P
+          <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white shadow-md shadow-indigo-200 dark:shadow-none">
+            <TrendingUp size={20} />
           </div>
           <span className="hidden lg:block ml-3 font-bold text-gray-800 dark:text-white text-lg">
-            Portfolio
+            Trade
           </span>
         </div>
 
@@ -1577,15 +1626,74 @@ const Dashboard = ({ user, token, onLogout, isDarkMode, toggleTheme }) => {
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col h-full overflow-hidden">
-        <header className="h-16 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between px-6 lg:px-8 flex-shrink-0">
-          <div className="flex items-center bg-gray-100 dark:bg-gray-700 rounded-lg px-3 py-2 w-full max-w-sm">
-            <Search size={18} className="text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search stocks..."
-              className="bg-transparent border-none outline-none text-sm ml-2 w-full text-gray-900 dark:text-white placeholder-gray-500"
-            />
+        <header className="h-16 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between px-6 lg:px-8 flex-shrink-0 relative z-50">
+          {/* Search Bar */}
+          <div className="relative w-full max-w-sm" ref={searchRef}>
+            <div className="flex items-center bg-gray-100 dark:bg-gray-700 rounded-lg px-3 py-2 transition-colors focus-within:ring-2 focus-within:ring-indigo-500/20">
+              <Search size={18} className="text-gray-400" />
+              <input
+                type="text"
+                placeholder="Search stocks (e.g. Apple)..."
+                className="bg-transparent border-none outline-none text-sm ml-2 w-full text-gray-900 dark:text-white placeholder-gray-500"
+                value={searchQuery}
+                onChange={handleSearch}
+              />
+              {isSearching && (
+                <RefreshCw
+                  size={14}
+                  className="animate-spin text-indigo-500 ml-2"
+                />
+              )}
+            </div>
+
+            {/* Search Dropdown */}
+            {(searchResults.length > 0 ||
+              (searchQuery.length >= 2 &&
+                !isSearching &&
+                searchResults.length === 0)) && (
+              <div className="absolute top-full mt-2 w-full bg-white dark:bg-gray-800 rounded-xl shadow-xl overflow-hidden border border-gray-100 dark:border-gray-700 animate-fade-in">
+                {searchResults.length > 0 ? (
+                  <div className="max-h-64 overflow-y-auto">
+                    {searchResults.map((stock) => (
+                      <button
+                        key={stock.id}
+                        onClick={() => {
+                          setTradeModal({
+                            isOpen: true,
+                            type: "BUY",
+                            stock,
+                            currentPrice: stock.currentPrice,
+                          });
+                          setSearchResults([]);
+                          setSearchQuery("");
+                        }}
+                        className="block w-full text-left px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors border-b border-gray-100 dark:border-gray-700/50 last:border-0"
+                      >
+                        <div className="flex justify-between items-center">
+                          <div>
+                            <div className="font-bold text-gray-900 dark:text-white">
+                              {stock.symbol}
+                            </div>
+                            <div className="text-xs text-gray-500">
+                              {stock.companyName}
+                            </div>
+                          </div>
+                          <div className="text-sm font-medium text-indigo-600 dark:text-indigo-400">
+                            ${stock.currentPrice?.toFixed(2)}
+                          </div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="px-4 py-3 text-sm text-gray-500 text-center">
+                    No stocks found.
+                  </div>
+                )}
+              </div>
+            )}
           </div>
+
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-3 pl-4 border-l border-gray-200 dark:border-gray-600">
               <div className="text-right hidden md:block">
@@ -1596,10 +1704,9 @@ const Dashboard = ({ user, token, onLogout, isDarkMode, toggleTheme }) => {
                   {user && user.email ? user.email : "User"}
                 </div>
               </div>
-              <div className="w-9 h-9 bg-gradient-to-tr from-indigo-500 to-purple-500 rounded-lg flex items-center justify-center text-white font-bold">
-                {user && user.username
-                  ? user.username.charAt(0).toUpperCase()
-                  : "U"}
+              {/* Updated User Icon */}
+              <div className="w-9 h-9 bg-gradient-to-tr from-indigo-500 to-purple-500 rounded-full flex items-center justify-center text-white shadow-md ring-2 ring-white dark:ring-gray-800">
+                <CircleUser size={20} />
               </div>
             </div>
           </div>

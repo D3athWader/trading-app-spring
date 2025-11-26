@@ -1,87 +1,115 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Trading App</title>
 
-    <!-- External CSS -->
-    <link rel="stylesheet" href="css/styles.css" />
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Trade App</title>
 
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-      tailwind.config = {
-        darkMode: "class",
-        theme: {
-          extend: {
-            animation: {
-              "fade-in": "fadeIn 0.5s ease-out",
+  <!-- External CSS -->
+  <link rel="stylesheet" href="css/styles.css" />
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          animation: {
+            "fade-in": "fadeIn 0.5s ease-out",
+          },
+          keyframes: {
+            fadeIn: {
+              "0%": {opacity: "0", transform: "translateY(10px)"},
+              "100%": {opacity: "1", transform: "translateY(0)"},
             },
-            keyframes: {
-              fadeIn: {
-                "0%": { opacity: "0", transform: "translateY(10px)" },
-                "100%": { opacity: "1", transform: "translateY(0)" },
-              },
+          },
+          colors: {
+            gray: {
+              50: "#f9fafb", // Light: standard gray-50  | Dark (mapped via CSS classes, but for direct use: #f9e2af is yellow, let's keep standard light)
+
+              50: "#f9fafb",
+              100: "#f3f4f6",
+              200: "#e5e7eb",
+              300: "#d1d5db",
+              400: "#9ca3af",
+              500: "#6b7280",
+
+              600: "#45475a", // Surface 1
+              700: "#313244", // Surface 0 (Card BG)
+              800: "#1e1e2e", // Base (App BG)
+              900: "#181825", // Mantle (Sidebar BG)
+              950: "#11111b", // Crust
+            },
+            indigo: {
+              50: "#eef2ff",
+              100: "#e0e7ff",
+              500: "#6366f1", // Primary Light
+              600: "#4f46e5", // Hover Light
+
+              400: "#cba6f7", // Mauve (Primary Dark)
+              300: "#b4befe", // Lavender
+            },
+            red: {
+              50: "#fef2f2",
+              100: "#fee2e2",
+              500: "#ef4444",
+              600: "#dc2626",
+
+              400: "#f38ba8", // Red (Dark Mode Text/Icon)
+            },
+            green: {
+              // Light: Standard Green
+              50: "#f0fdf4",
+              100: "#dcfce7",
+              500: "#22c55e",
+              600: "#16a34a",
+
+              400: "#a6e3a1", // Green (Dark Mode Text/Icon)
             },
           },
         },
-      };
-    </script>
+      },
+    };
+  </script>
 
-    <!-- Import Map for External Libraries ONLY -->
-    <script type="importmap">
+  <!-- Import Map for External Libraries ONLY -->
+  <script type="importmap">
       {
         "imports": {
           "react": "https://esm.sh/react@18.2.0",
-          "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
-          "lucide-react": "https://esm.sh/lucide-react@0.263.1"
+          "react-dom/client": "https://esm.sh/react-dom@18.2.0/client?deps=react@18.2.0",
+          "lucide-react": "https://esm.sh/lucide-react@0.460.0?deps=react@18.2.0"
         }
       }
     </script>
 
-    <!-- Babel for JSX transpilation -->
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <!-- Babel for JSX transpilation -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
-    <!-- WebSocket Libraries with SRI Hashes -->
-    <script
-      src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.6.1/sockjs.min.js"
-      xintegrity="sha512-1QvjE7BtotQjkq8PxLeF6P46gEpBRXuskzIVgjFpekzFVF4yjRgrQvTG1MTOlzs56deGM8PlT+JKuhq837lUDg=="
-      crossorigin="anonymous"
-      referrerpolicy="no-referrer"
-    ></script>
-    <script
-      src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"
-      xintegrity="sha512-iKDtgDyTHjAitUDdLljGhenhPwrbBfqTKWO1mkhSFH3A7blITC9MhYon6SjnMhp4o0rADGw9yAC6EW4t5a4K3g=="
-      crossorigin="anonymous"
-      referrerpolicy="no-referrer"
-    ></script>
-  </head>
+  <!-- WebSocket Libraries with SRI Hashes -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.6.1/sockjs.min.js"
+    xintegrity="sha512-1QvjE7BtotQjkq8PxLeF6P46gEpBRXuskzIVgjFpekzFVF4yjRgrQvTG1MTOlzs56deGM8PlT+JKuhq837lUDg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"
+    xintegrity="sha512-iKDtgDyTHjAitUDdLljGhenhPwrbBfqTKWO1mkhSFH3A7blITC9MhYon6SjnMhp4o0rADGw9yAC6EW4t5a4K3g=="
+    crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+</head>
 
-  <body class="bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
-    <div id="root"></div>
+<body class="bg-gray-50 dark:bg-gray-800 transition-colors duration-300 text-gray-900 dark:text-gray-100">
+  <div id="root"></div>
 
-    <!-- 
+  <!-- 
        MODULAR FILE LOADING STRATEGY:
        We load files sequentially. Each file attaches its components to the 'window' object.
        We use data-type="module" to allow importing external libraries like React/Lucide.
     -->
-    <script type="text/babel" data-type="module" src="js/config.js"></script>
-    <script
-      type="text/babel"
-      data-type="module"
-      src="js/components/UI.jsx"
-    ></script>
-    <script
-      type="text/babel"
-      data-type="module"
-      src="js/components/Auth.jsx"
-    ></script>
-    <script
-      type="text/babel"
-      data-type="module"
-      src="js/components/Dashboard.jsx"
-    ></script>
-    <script type="text/babel" data-type="module" src="js/App.jsx"></script>
-  </body>
+  <script type="text/babel" data-type="module" src="js/config.js"></script>
+  <script type="text/babel" data-type="module" src="js/components/UI.jsx"></script>
+  <script type="text/babel" data-type="module" src="js/components/Auth.jsx"></script>
+  <script type="text/babel" data-type="module" src="js/components/Dashboard.jsx"></script>
+  <script type="text/babel" data-type="module" src="js/App.jsx"></script>
+</body>
+
 </html>
