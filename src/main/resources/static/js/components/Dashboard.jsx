@@ -161,7 +161,7 @@ const TradeModal = ({
       <div className="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-sm p-6 shadow-2xl relative transition-all">
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+          className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-transform active:scale-90"
         >
           <XCircle size={20} />
         </button>
@@ -170,7 +170,7 @@ const TradeModal = ({
           <button
             type="button"
             onClick={() => setOrderType("BUY")}
-            className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all duration-200 ${
+            className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all duration-200 active:scale-95 ${
               orderType === "BUY"
                 ? "bg-white dark:bg-gray-600 text-green-600 dark:text-green-400 shadow-sm scale-105"
                 : "text-gray-500 dark:text-gray-400 hover:text-gray-700"
@@ -181,7 +181,7 @@ const TradeModal = ({
           <button
             type="button"
             onClick={() => setOrderType("SELL")}
-            className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all duration-200 ${
+            className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all duration-200 active:scale-95 ${
               orderType === "SELL"
                 ? "bg-white dark:bg-gray-600 text-red-600 dark:text-red-400 shadow-sm scale-105"
                 : "text-gray-500 dark:text-gray-400 hover:text-gray-700"
@@ -225,7 +225,7 @@ const TradeModal = ({
               <button
                 type="button"
                 onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                className="p-2 rounded-lg border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300"
+                className="p-2 rounded-lg border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 transition-transform active:scale-90"
               >
                 <Minus size={16} />
               </button>
@@ -239,7 +239,7 @@ const TradeModal = ({
               <button
                 type="button"
                 onClick={() => setQuantity(quantity + 1)}
-                className="p-2 rounded-lg border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300"
+                className="p-2 rounded-lg border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 transition-transform active:scale-90"
               >
                 <Plus size={16} />
               </button>
@@ -1044,10 +1044,10 @@ const AdminPanel = ({ token }) => {
                 setActiveSection(sec);
                 setStatus(null);
               }}
-              className={`px-4 py-2 rounded-md text-sm font-medium capitalize transition-all ${
+              className={`px-4 py-2 rounded-md text-sm font-medium capitalize transition-all duration-200 active:scale-95 ${
                 activeSection === sec
-                  ? "bg-white dark:bg-gray-600 text-indigo-600 dark:text-white shadow-sm"
-                  : "text-gray-500 dark:text-gray-300 hover:text-gray-700"
+                  ? "bg-white dark:bg-gray-600 text-indigo-600 dark:text-white shadow-sm scale-105"
+                  : "text-gray-500 dark:text-gray-300 hover:text-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600/50"
               }`}
             >
               {sec}
@@ -1059,7 +1059,7 @@ const AdminPanel = ({ token }) => {
       <Alert type={status?.type} message={status?.message} />
 
       {activeSection === "companies" && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-fade-in">
           <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm">
             <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
               <Briefcase size={20} /> Create Company
@@ -1126,7 +1126,7 @@ const AdminPanel = ({ token }) => {
       )}
 
       {activeSection === "stocks" && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-fade-in">
           <div className="lg:col-span-1 bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm h-fit">
             <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
               <TrendingUp size={20} /> Add New Stock
@@ -1202,7 +1202,7 @@ const AdminPanel = ({ token }) => {
                       <td className="p-3 text-right">
                         <button
                           onClick={() => handleDeleteStock(s.id)}
-                          className="text-red-500 hover:text-red-700 text-sm font-medium"
+                          className="text-red-500 hover:text-red-700 text-sm font-medium transition-transform active:scale-95 hover:underline"
                         >
                           Delete
                         </button>
@@ -1217,7 +1217,7 @@ const AdminPanel = ({ token }) => {
       )}
 
       {activeSection === "users" && (
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden animate-fade-in">
           <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
             <Users size={20} /> User Management
           </h3>
@@ -1255,7 +1255,7 @@ const AdminPanel = ({ token }) => {
                       {!u.role?.includes("ADMIN") && (
                         <button
                           onClick={() => handleMakeAdmin(u.userName)}
-                          className="text-indigo-600 hover:text-indigo-800 text-sm font-medium"
+                          className="text-indigo-600 hover:text-indigo-800 text-sm font-medium transition-transform active:scale-95 hover:underline"
                         >
                           Make Admin
                         </button>
@@ -1350,10 +1350,7 @@ const Dashboard = ({ user, token, onLogout, isDarkMode, toggleTheme }) => {
         stompClient.debug = () => {};
 
         stompClient.connect(
-          {
-            // Pass auth token in header
-            Authorization: `Bearer ${token}`,
-          },
+          {}, // Empty object for headers = No Auth
           (frame) => {
             setConnectionStatus("connected");
             console.log("Connected to WebSocket");
@@ -1531,10 +1528,10 @@ const Dashboard = ({ user, token, onLogout, isDarkMode, toggleTheme }) => {
                 key={tab}
                 type="button"
                 onClick={() => setActiveTab(tab)}
-                className={`w-full flex items-center p-3 rounded-xl transition-all capitalize ${
+                className={`w-full flex items-center p-3 rounded-xl transition-all duration-200 active:scale-95 capitalize ${
                   activeTab === tab
-                    ? "bg-indigo-50 text-indigo-600 dark:bg-indigo-900/20 dark:text-indigo-400"
-                    : "text-gray-500 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-700/50"
+                    ? "bg-indigo-50 text-indigo-600 dark:bg-indigo-900/20 dark:text-indigo-400 scale-105 shadow-sm"
+                    : "text-gray-500 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-700/50 hover:pl-4"
                 }`}
               >
                 {tab === "market" && <LayoutDashboard size={20} />}
@@ -1551,10 +1548,10 @@ const Dashboard = ({ user, token, onLogout, isDarkMode, toggleTheme }) => {
             <button
               type="button"
               onClick={() => setActiveTab("admin")}
-              className={`w-full flex items-center p-3 rounded-xl transition-all ${
+              className={`w-full flex items-center p-3 rounded-xl transition-all duration-200 active:scale-95 ${
                 activeTab === "admin"
-                  ? "bg-indigo-50 text-indigo-600 dark:bg-indigo-900/20 dark:text-indigo-400"
-                  : "text-gray-500 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-700/50"
+                  ? "bg-indigo-50 text-indigo-600 dark:bg-indigo-900/20 dark:text-indigo-400 scale-105 shadow-sm"
+                  : "text-gray-500 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-700/50 hover:pl-4"
               }`}
             >
               <ShieldCheck size={20} />
@@ -1567,7 +1564,7 @@ const Dashboard = ({ user, token, onLogout, isDarkMode, toggleTheme }) => {
           <button
             type="button"
             onClick={onLogout}
-            className="w-full flex items-center p-3 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-all"
+            className="w-full flex items-center p-3 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-all duration-200 active:scale-95"
           >
             <LogOut size={20} />
             <span className="hidden lg:block ml-3 font-medium">Logout</span>
@@ -1611,12 +1608,11 @@ const Dashboard = ({ user, token, onLogout, isDarkMode, toggleTheme }) => {
         <main className="flex-1 overflow-y-auto p-6 lg:p-8">
           <div className="max-w-7xl mx-auto space-y-8 pb-20">
             {/* Stats Row */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-fade-in">
               <StatCard
                 title="Cash Balance"
                 value={`$${Number(balance).toLocaleString()}`}
                 icon={Wallet}
-                trend={0}
               />
               <StatCard
                 title="Active Orders"
@@ -1627,14 +1623,13 @@ const Dashboard = ({ user, token, onLogout, isDarkMode, toggleTheme }) => {
                 title="Total Assets"
                 value={`$${Number(totalAssets).toLocaleString()}`}
                 icon={DollarSign}
-                trend={0}
               />
             </div>
 
             {/* --- VIEW LOGIC --- */}
 
             {activeTab === "market" && (
-              <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 animate-fade-in">
                 <div className="xl:col-span-2 bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden flex flex-col">
                   {/* ... Market Table Header & Content ... */}
                   <div className="p-6 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
@@ -1644,7 +1639,7 @@ const Dashboard = ({ user, token, onLogout, isDarkMode, toggleTheme }) => {
                     <button
                       type="button"
                       onClick={fetchData}
-                      className="text-indigo-600 dark:text-indigo-400 text-sm font-medium hover:underline flex items-center gap-1"
+                      className="text-indigo-600 dark:text-indigo-400 text-sm font-medium hover:underline flex items-center gap-1 transition-transform active:scale-95"
                     >
                       <RefreshCw size={14} /> Refresh
                     </button>
@@ -1713,7 +1708,7 @@ const Dashboard = ({ user, token, onLogout, isDarkMode, toggleTheme }) => {
                                       stock,
                                     })
                                   }
-                                  className="px-3 py-1.5 rounded-lg bg-green-50 text-green-700 text-xs font-bold hover:bg-green-100 dark:bg-green-900/20 dark:text-green-400 dark:hover:bg-green-900/30 transition-colors"
+                                  className="px-3 py-1.5 rounded-lg bg-green-50 text-green-700 text-xs font-bold hover:bg-green-100 dark:bg-green-900/20 dark:text-green-400 dark:hover:bg-green-900/30 transition-all duration-150 active:scale-95 hover:-translate-y-0.5"
                                 >
                                   Buy
                                 </button>
@@ -1726,7 +1721,7 @@ const Dashboard = ({ user, token, onLogout, isDarkMode, toggleTheme }) => {
                                       stock,
                                     })
                                   }
-                                  className="px-3 py-1.5 rounded-lg bg-red-50 text-red-700 text-xs font-bold hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/30 transition-colors"
+                                  className="px-3 py-1.5 rounded-lg bg-red-50 text-red-700 text-xs font-bold hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/30 transition-all duration-150 active:scale-95 hover:-translate-y-0.5"
                                 >
                                   Sell
                                 </button>
@@ -1749,7 +1744,7 @@ const Dashboard = ({ user, token, onLogout, isDarkMode, toggleTheme }) => {
             )}
 
             {activeTab === "portfolio" && (
-              <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
+              <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden animate-fade-in">
                 {/* ... Portfolio Table ... */}
                 <div className="p-6 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
                   <h2 className="text-lg font-bold text-gray-900 dark:text-white">
@@ -1758,7 +1753,7 @@ const Dashboard = ({ user, token, onLogout, isDarkMode, toggleTheme }) => {
                   <button
                     type="button"
                     onClick={fetchData}
-                    className="text-indigo-600 dark:text-indigo-400 text-sm font-medium hover:underline flex items-center gap-1"
+                    className="text-indigo-600 dark:text-indigo-400 text-sm font-medium hover:underline flex items-center gap-1 transition-transform active:scale-95"
                   >
                     <RefreshCw size={14} /> Refresh
                   </button>
@@ -1840,7 +1835,7 @@ const Dashboard = ({ user, token, onLogout, isDarkMode, toggleTheme }) => {
                                       currentPrice: currentPrice,
                                     })
                                   }
-                                  className="px-3 py-1.5 rounded-lg bg-red-50 text-red-700 text-xs font-bold hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400 transition-colors"
+                                  className="px-3 py-1.5 rounded-lg bg-red-50 text-red-700 text-xs font-bold hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400 transition-all duration-150 active:scale-95 hover:-translate-y-0.5"
                                 >
                                   Sell
                                 </button>
@@ -1856,7 +1851,7 @@ const Dashboard = ({ user, token, onLogout, isDarkMode, toggleTheme }) => {
             )}
 
             {activeTab === "orders" && (
-              <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 animate-fade-in">
                 <div className="xl:col-span-2 space-y-6">
                   {/* ... Place Order Buttons ... */}
                   <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm">
@@ -1877,7 +1872,7 @@ const Dashboard = ({ user, token, onLogout, isDarkMode, toggleTheme }) => {
                               currentPrice: stock.currentPrice,
                             })
                           }
-                          className="p-4 rounded-xl border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 text-left transition-all group"
+                          className="p-4 rounded-xl border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 text-left transition-all group hover:shadow-md active:scale-[0.99]"
                         >
                           <div className="flex justify-between items-start">
                             <div>
@@ -1972,7 +1967,7 @@ const Dashboard = ({ user, token, onLogout, isDarkMode, toggleTheme }) => {
                                     order.status === "PARTIALLY_FILLED") && (
                                     <button
                                       onClick={() => cancelOrder(order.id)}
-                                      className="text-red-500 hover:text-red-700 text-xs font-bold uppercase"
+                                      className="text-red-500 hover:text-red-700 text-xs font-bold uppercase transition-transform active:scale-95 hover:underline"
                                     >
                                       Cancel
                                     </button>
@@ -1996,7 +1991,7 @@ const Dashboard = ({ user, token, onLogout, isDarkMode, toggleTheme }) => {
             )}
 
             {activeTab === "trades" && (
-              <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 animate-fade-in">
                 {/* History Component */}
                 <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden h-full min-h-[600px] flex flex-col">
                   <div className="p-6 border-b border-gray-100 dark:border-gray-700">
@@ -2018,14 +2013,20 @@ const Dashboard = ({ user, token, onLogout, isDarkMode, toggleTheme }) => {
             )}
 
             {activeTab === "settings" && (
-              <SettingsPanel
-                user={fullUser}
-                token={token}
-                onUpdate={fetchData}
-              />
+              <div className="animate-fade-in">
+                <SettingsPanel
+                  user={fullUser}
+                  token={token}
+                  onUpdate={fetchData}
+                />
+              </div>
             )}
 
-            {activeTab === "admin" && isAdmin && <AdminPanel token={token} />}
+            {activeTab === "admin" && isAdmin && (
+              <div className="animate-fade-in">
+                <AdminPanel token={token} />
+              </div>
+            )}
           </div>
         </main>
       </div>

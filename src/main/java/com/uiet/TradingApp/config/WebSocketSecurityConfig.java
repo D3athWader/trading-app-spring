@@ -22,7 +22,7 @@ public class WebSocketSecurityConfig {
         .simpSubscribeDestMatchers("/topic/**")
         .permitAll()
         .simpDestMatchers("/app/**")
-        .authenticated()
+        .permitAll()
         .anyMessage()
         .permitAll();
 

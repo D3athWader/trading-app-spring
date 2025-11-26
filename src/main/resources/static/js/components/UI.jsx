@@ -67,8 +67,9 @@ const Button = ({
 	type = "button",
 	...props
 }) => {
+	// Added 'active:scale-95' for click effect and 'hover:-translate-y-0.5' for lift effect
 	const baseStyle =
-		"w-full flex justify-center items-center gap-2 py-2.5 px-4 border text-sm font-semibold rounded-xl focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all";
+		"w-full flex justify-center items-center gap-2 py-2.5 px-4 border text-sm font-semibold rounded-xl focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 ease-in-out active:scale-95 hover:-translate-y-0.5";
 	const variants = {
 		primary:
 			"border-transparent text-white bg-indigo-600 hover:bg-indigo-700 focus:ring-indigo-500 shadow-lg shadow-indigo-500/30 dark:bg-indigo-500 dark:hover:bg-indigo-600 dark:shadow-indigo-900/20",
@@ -94,7 +95,8 @@ const Button = ({
 };
 
 const StatCard = ({ title, value, icon: Icon, trend }) => (
-	<div className="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm">
+	// Added hover effect to StatCard as well
+	<div className="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-1">
 		<div className="flex justify-between items-start mb-4">
 			<div className="p-3 bg-indigo-50 dark:bg-indigo-900/30 rounded-xl text-indigo-600 dark:text-indigo-400">
 				{Icon && <Icon size={24} />}
